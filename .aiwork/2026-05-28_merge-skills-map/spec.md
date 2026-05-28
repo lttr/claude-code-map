@@ -10,7 +10,7 @@ Fold all functionality of `~/code/claude-code-skills-map` into `claude-code-map`
 - **Locations:** global (`~/.claude/{skills,commands,agents}`), user-plugin, scoped-plugin, local (`<proj>/.claude/`), MCP scopes (user/project/local)
 - **Recency tiers:** hot ≤7d, warm ≤30d, cool ≤90d, stale, none
 - **Contested name:** token resolves to 2+ impls across kinds/locations
-- Full glossary → [CONTEXT.md](../../CONTEXT.md)
+- Full glossary → [BOUNDED-CONTEXT.md](../../BOUNDED-CONTEXT.md)
 
 ## Architecture
 
@@ -79,7 +79,7 @@ Chip
 - `templates/shell.html` — new, from current `src/index.html` minus the gazetteer JS.
 - `templates/atlas.html.ts` (or `.css` + render helpers) — new, server renders atlas fragment.
 - `src/` — delete after migration.
-- `CONTEXT.md` — done.
+- `BOUNDED-CONTEXT.md` — done.
 - `notes.md` — done (session notes).
 
 ## Out of scope
