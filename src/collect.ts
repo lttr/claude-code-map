@@ -59,7 +59,7 @@ export interface Item {
   pluginMarketplace?: string;
   pluginInstallPath?: string;
   pluginScope?: "user" | "project";
-  pluginStatus?: "active" | "archived" | "removed" | "orphaned";
+  pluginStatus?: "active" | "archived";
   pluginStatusNote?: string;
   projectPath?: string;
   transport?: string;
@@ -77,7 +77,7 @@ export interface PluginInfo {
   projectPath?: string;
   installPath: string;
   version?: string;
-  status: "active" | "archived" | "removed" | "orphaned";
+  status: "active" | "archived";
   statusNote: string;
   items: Item[];
 }
@@ -403,7 +403,7 @@ interface RawMcp {
   pluginMarketplace?: string;
   pluginInstallPath?: string;
   pluginScope?: "user" | "project";
-  pluginStatus?: "active" | "archived" | "removed" | "orphaned";
+  pluginStatus?: "active" | "archived";
   pluginStatusNote?: string;
   projectPath?: string;
   transport?: string;
@@ -594,10 +594,11 @@ export async function collect(): Promise<CollectResult> {
   const marketplaces = await readMarketplaces();
   const installs = await readInstalledPlugins();
 
-  // Resolve plugin status for each install
+  // Resolve plugin status for each install; drop orphaned/removed — they're gone.
   const installInfo: Map<string, PluginInfo> = new Map();
   for (const inst of installs) {
     const st = pluginStatus(inst.name, inst.marketplace, inst.installPath, marketplaces);
+    if (st.status === "orphaned" || st.status === "removed") continue;
     installInfo.set(inst.installPath, {
       id: inst.id,
       name: inst.name,
@@ -652,7 +653,8 @@ export async function collect(): Promise<CollectResult> {
 
   // Plugin items (skills/commands/agents) for each install
   for (const inst of installs) {
-    const info = installInfo.get(inst.installPath)!;
+    const info = installInfo.get(inst.installPath);
+    if (!info) continue;
     const loc: Location = inst.scope === "user" ? "user-plugin" : "scoped-plugin";
     const sk = await listDir(join(inst.installPath, "skills"));
     const cm = await listMarkdownItems(join(inst.installPath, "commands"));
@@ -703,7 +705,10 @@ export async function collect(): Promise<CollectResult> {
   // Candidate projects
   const fromHistory = new Set<string>(folderToCwdCache.values());
   const candidates = new Set<string>(fromHistory);
-  for (const inst of installs) if (inst.scope === "project" && inst.projectPath) candidates.add(inst.projectPath);
+  for (const inst of installs) {
+    if (!installInfo.has(inst.installPath)) continue;
+    if (inst.scope === "project" && inst.projectPath) candidates.add(inst.projectPath);
+  }
   for (const p of projectMcpsByPath.keys()) candidates.add(p);
 
   // Per-project local items

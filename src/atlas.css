@@ -270,8 +270,6 @@ h1.title em { font-style: italic; color: var(--accent); }
 }
 .plug-status.s-active   { color: var(--accent-2); border-color: var(--accent-2); }
 .plug-status.s-archived { color: var(--ink-faint); border-color: var(--ink-faint); font-style: italic; }
-.plug-status.s-removed  { color: var(--accent);  border-color: var(--accent); }
-.plug-status.s-orphaned { color: var(--accent);  border-color: var(--accent); font-style: italic; }
 
 .colophon {
   margin: 48px 0 0; display: flex; justify-content: space-between; align-items: baseline;
