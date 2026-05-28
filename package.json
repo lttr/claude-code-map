@@ -2,10 +2,13 @@
   "name": "claude-code-map",
   "private": true,
   "type": "module",
+  "bin": {
+    "claude-code-map": "./bin/claude-code-map.ts"
+  },
   "scripts": {
-    "start": "node src/backend.ts"
+    "start": "node bin/claude-code-map.ts"
   },
   "engines": {
-    "node": ">=23"
+    "node": ">=23.6"
   }
 }

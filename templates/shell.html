@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Map of my Servitors</title>
+<meta name="viewport" content="width=1440" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=IM+Fell+DW+Pica:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/atlas.css">
+</head>
+<body>
+
+<div class="page">
+
+  <header class="cartouche">
+    <div class="eyebrow">Terra Cognita · Chartæ Servorum</div>
+    <h1 class="title">Map of my <em>Servitors</em></h1>
+    <p class="subtitle" id="subtitle">
+      A cartographer's snapshot of skills, commands, subagents, and Model Context Protocol servers
+      charted across global, plugin, and project locations. Drawn <span id="date-stamp">today</span>.
+    </p>
+    <div class="rule-orn">
+      <span class="line"></span><span class="diamond"></span>
+      <span class="fleur">❦</span>
+      <span class="diamond"></span><span class="line"></span>
+    </div>
+  </header>
+
+  <div id="atlas" class="atlas atlas-loading">
+    <div class="loading-overlay">
+      <div class="loading-mark">❦</div>
+      <div class="loading-text">Surveying the territory…</div>
+    </div>
+  </div>
+
+  <footer class="colophon">
+    <span>claude-code-map · live</span>
+    <em>Hic svnt servitores. — Here be servers.</em>
+    <span id="colophon-date">—</span>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var fmt = new Intl.DateTimeFormat(undefined, { year: "numeric", month: "long", day: "numeric" });
+    var now = new Date();
+    var stamp = document.getElementById("date-stamp");
+    if (stamp) stamp.textContent = "the " + fmt.format(now);
+    var col = document.getElementById("colophon-date");
+    if (col) col.textContent = fmt.format(now);
+  })();
+
+  (async function () {
+    var atlas = document.getElementById("atlas");
+    try {
+      var res = await fetch("/atlas.html", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      var html = await res.text();
+      atlas.classList.remove("atlas-loading");
+      atlas.innerHTML = html;
+    } catch (e) {
+      atlas.classList.remove("atlas-loading");
+      atlas.innerHTML = '<div class="atlas-error">Survey failed: ' + String(e).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }) + "</div>";
+    }
+  })();
+</script>
+
+</body>
+</html>
