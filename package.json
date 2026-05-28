@@ -1,0 +1,11 @@
+{
+  "name": "claude-code-map",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node backend.ts"
+  },
+  "engines": {
+    "node": ">=23"
+  }
+}
