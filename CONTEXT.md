@@ -24,7 +24,7 @@ Glossary of terms used in this project. Implementation details belong in code; t
 - **Plate** — one paper sheet in the atlas. Each plate has its own cartouche, border, and texture.
 - **Overview plate** — top plate: cartouche, tally, [[compass-plate]], and global/user-wide inventory.
 - **Compass plate** — small symbolic SVG legend on the overview plate. Shows the four kind hues and the location rings. Carries no data — purely a key.
-- **Regional plate** — one plate per parent directory of projects (e.g., `~/code`, `~/work`). Holds project cards inside that region, sorted by activity.
+- **Regional plate** — one plate per parent directory of projects (any workspace root). Holds project cards inside that region, sorted by activity.
 - **Province / Region** — parent-directory grouping of projects. Synonym for what a regional plate covers.
 - **Project card** — one card on a regional plate, listing that project's local items, scoped plugins, and activity stamp.
 

@@ -1,3 +1,23 @@
+// Claude Code paths and config keys this collector reads. References:
+//   ~/.claude/{skills,commands,agents}/                 user-level items
+//     skills: https://code.claude.com/docs/en/skills
+//     subagents: https://code.claude.com/docs/en/sub-agents
+//     (commands have merged into skills; .claude/commands/*.md still works)
+//   <proj>/.claude/{skills,commands,agents}/            project-local items (same docs)
+//   <plugin-root>/{skills,commands,agents,.mcp.json}    plugin internal layout
+//     SKILL.md lives at skills/<name>/SKILL.md
+//     https://code.claude.com/docs/en/plugins
+//   ~/.claude.json                                      main config: user-scope mcpServers + projects map
+//     https://code.claude.com/docs/en/mcp
+//   <proj>/.mcp.json                                    project-scope MCP config (same docs)
+//   ~/.claude/settings.json, <proj>/.claude/settings{,.local}.json
+//                                                       settings incl. enabledPlugins
+//     https://code.claude.com/docs/en/settings
+//   ~/.claude/plugins/known_marketplaces.json           registered marketplaces
+//   ~/.claude/plugins/installed_plugins.json            installed plugin records
+//   ~/.claude/plugins/{cache,marketplaces}/             on-disk plugin sources
+//     https://code.claude.com/docs/en/discover-plugins
+//   ~/.claude/projects/<slug>/*.jsonl                   transcripts (internal, undocumented)
 import { readdir, readFile, stat } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
@@ -475,7 +495,10 @@ async function scanProjectAndPluginMcps(installs: PluginInstall[]): Promise<RawM
   const fd = await run("fd", ["-H", "-t", "f", "\\.mcp\\.json$", HOME, "--max-depth", "8"]);
   const byPath = new Map<string, PluginInstall>();
   for (const i of installs) byPath.set(i.installPath, i);
-  const PLUGIN_SRC = /\/(cowork_plugins|marketplaces|claude-marketplace\/plugins|\.claude\/plugins\/(cache|marketplaces))\//;
+  // Match plugin source roots: ~/.claude/plugins/{cache,marketplaces}/ are the documented locations
+  // (https://code.claude.com/docs/en/discover-plugins); `marketplaces` and `claude-marketplace/plugins`
+  // catch nested marketplace checkouts that ship plugins alongside a marketplace.json.
+  const PLUGIN_SRC = /\/(marketplaces|claude-marketplace\/plugins|\.claude\/plugins\/(cache|marketplaces))\//;
 
   for (const path of fd.split("\n").filter(Boolean)) {
     const dir = path.replace(/\/\.mcp\.json$/, "");
