@@ -3,12 +3,12 @@ import { createServer } from "node:http";
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { collect } from "./collect.ts";
-import { renderAtlas, renderFullPage } from "./render.ts";
+import { collect } from "../src/collect.ts";
+import { renderAtlas, renderFullPage } from "../src/render.ts";
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const SHELL_PATH = join(ROOT, "templates/shell.html");
-const CSS_PATH = join(ROOT, "templates/atlas.css");
+const SHELL_PATH = join(ROOT, "src/shell.html");
+const CSS_PATH = join(ROOT, "src/atlas.css");
 
 interface Args {
   port: number;

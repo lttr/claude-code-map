@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "bin": {
-    "claude-code-map": "./bin/claude-code-map.ts"
+    "claude-code-map": "./bin/cli.ts"
   },
   "scripts": {
-    "start": "node bin/claude-code-map.ts"
+    "start": "node bin/cli.ts"
   },
   "engines": {
     "node": ">=23.6"
