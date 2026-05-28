@@ -1,101 +1,31 @@
-# MCP Usage Map
+# Notes
 
-Snapshot of MCP server configuration across scopes on this machine.
+## 2026-05-28 — Merging skills-map into this project
 
-## Scopes
+Decided to expand claude-code-map from MCP-only to a four-kind inventory (MCP, skill, command, subagent) folding in everything `~/code/claude-code-skills-map` does, while keeping the cartographer visual identity.
 
-Claude Code resolves MCP servers from three scopes:
+Key decisions:
 
-1. **User scope (global)** — `~/.claude.json` `mcpServers` + claude.ai remote servers. Available in every session.
-2. **Project scope** — `.mcp.json` at project root, checked into repo, shared with collaborators.
-3. **Local scope** — `~/.claude.json` `projects.<path>.mcpServers`, per-project but private to this user.
+- **Superset**, not replace — MCPs become one kind among four.
+- **Cartographer recency encoding** — period-ink palette (iron-gall / madder / verdigris / sepia), ink density encodes heat tier (hot/warm/cool/stale/none). AA contrast on paper is a hard constraint.
+- **Atlas page structure** — overview plate (cartouche, tally, compass legend, global/user inventory) + regional plates (one per parent dir of projects, project cards inside).
+- **Compass plate** is a symbolic SVG legend only — no data points on it.
+- **Live but locale-dated** — every refresh redraws, date renders via `Intl.DateTimeFormat`. Cartographer styling is garnish, not a frozen-snapshot fiction.
+- **Hybrid two-request architecture** — `GET /` returns a thin shell + loading overlay in ms; `GET /atlas.html` returns the fully-rendered body fragment once scanning + transcript parsing finish; client script swaps it in.
+- **Split files** — real `.html`/`.css`, no string-literal templates. Server-side rendering keeps client logic to overlay-swap only.
+- **Two-row tally** — per-kind counts above, activity stats below.
+- **"Contested name"** replaces "cross-scope" — same invocation token resolving to 2+ implementations across kinds or locations.
+- **TypeScript, no flags** — Node ≥23.6 strips types natively.
+- **Not Nuxt** — would solve the loading-UX problem cleanly but breaks the "single small npm CLI, `node bin/foo.ts` and go" shape that's the whole point.
 
-## Inventory
+Auto-resolved details:
 
-### User scope
+- CLI mirrors skills-map: `-p/--port` (7777), `--host` (127.0.0.1), `-o/--out FILE` (static export), `-h`.
+- In-process cache of parsed transcripts keyed by `path + mtime`. No disk cache.
+- Dormant projects (on disk, zero activity + zero local + zero scoped + zero project-MCPs) are hidden, counted in tally.
+- Missing projects (referenced but dir gone) are dropped, counted as "dropped".
 
-- `~/.claude.json` → `mcpServers`: **empty**
-- claude.ai remote (always on): `Strata`, `Excalidraw`, `Google Drive`, `Google Calendar`, `Gmail`
+Open visual calls deferred to render time:
 
-### Project scope (`.mcp.json`)
-
-| Path | Server |
-|---|---|
-| `~/.claude/marketplaces/product-claude-marketplace/plugins/tars-icloud-mcp/.mcp.json` | `icloud` |
-| `~/code/auto-browser/.mcp.json` | `chrome-devtools` |
-| `~/code/jedlik-nejedlik/web/.mcp.json` | `Sentry` |
-| `~/code/claude-marketplace/plugins/dev-flow/.mcp.json` | `atlassian` |
-
-### Local scope (`~/.claude.json` per-project)
-
-| Path | Servers |
-|---|---|
-| `~/code/ai-experiments` | `chrome-devtools` |
-| `~/code/jedlik-nejedlik` | `directus` |
-| `~/sandbox/spec-driven-1` | `nuxt-ui-remote`, `playwright` |
-| `~/work/drmax` | `atlassian` |
-| `~/Documents/youtube` | `youtube-transcript` |
-
-## Shared vs unique
-
-- `chrome-devtools` — shared: `auto-browser` (project) + `ai-experiments` (local)
-- `atlassian` — shared: `dev-flow` plugin (project) + `work/drmax` (local)
-- claude.ai remote 5 — shared globally across all projects
-- All other servers — unique to one location
-
-## ASCII map
-
-```
-USER (~/.claude.json mcpServers)    →  [] empty
-USER (claude.ai remote, always on)  →  Strata · Excalidraw · GDrive · GCal · Gmail
-│
-├── PROJECT .mcp.json (team-shared)
-│   ├── plugins/tars-icloud-mcp      → icloud
-│   ├── code/auto-browser            → chrome-devtools  ╲
-│   ├── code/jedlik-nejedlik/web     → Sentry            ╲ overlap
-│   └── plugins/dev-flow             → atlassian         ╱  with local
-│                                                       ╱
-└── LOCAL (~/.claude.json projects.*.mcpServers, user-private)
-    ├── code/ai-experiments          → chrome-devtools  ←┘ (shared name)
-    ├── code/jedlik-nejedlik         → directus
-    ├── sandbox/spec-driven-1        → nuxt-ui-remote, playwright
-    ├── work/drmax                   → atlassian        ←┘ (shared name)
-    └── Documents/youtube            → youtube-transcript
-```
-
-## Mermaid
-
-```mermaid
-graph LR
-    subgraph USER["USER scope (global)"]
-        U1[Strata]
-        U2[Excalidraw]
-        U3[GDrive]
-        U4[GCal]
-        U5[Gmail]
-    end
-    subgraph PROJ[".mcp.json (shared w/ team)"]
-        P1[icloud<br/>tars-icloud-mcp plugin]
-        P2[chrome-devtools<br/>auto-browser]
-        P3[Sentry<br/>jedlik-nejedlik/web]
-        P4[atlassian<br/>dev-flow plugin]
-    end
-    subgraph LOCAL["LOCAL (~/.claude.json, private)"]
-        L1[chrome-devtools<br/>ai-experiments]
-        L2[directus<br/>jedlik-nejedlik]
-        L3[nuxt-ui-remote+playwright<br/>spec-driven-1]
-        L4[atlassian<br/>work/drmax]
-        L5[youtube-transcript<br/>Documents/youtube]
-    end
-    P2 -.same server.- L1
-    P4 -.same server.- L4
-```
-
-## Source commands
-
-```bash
-fd -H -t f '\.mcp\.json$' /home/lukas --max-depth 6
-jq '.mcpServers | keys' ~/.claude.json
-jq '.projects | to_entries[] | select(.value.mcpServers != null and (.value.mcpServers | length > 0)) | {path: .key, servers: (.value.mcpServers | keys)}' ~/.claude.json
-claude mcp list
-```
+- Page title wording ("Map of my Servitors" vs keep "MCPs" with expanded subtitle).
+- Plugin status badges (active/archived/removed/orphaned) — translation to cartographer marginalia.
