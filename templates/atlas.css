@@ -15,6 +15,7 @@
   --hue-command:  #8a2e15;  /* madder / red-ochre */
   --hue-subagent: #3d5a3a;  /* verdigris / sage */
   --hue-mcp:      #5a3a18;  /* sepia / umber */
+  --hue-hook:     #5a2e4a;  /* tyrian / mulberry */
 }
 
 html, body { margin: 0; padding: 0; background: #2a2116; }
@@ -191,6 +192,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 .chip.k-command  { color: var(--hue-command);  border-color: color-mix(in srgb, var(--hue-command) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-command) 6%, var(--paper)); }
 .chip.k-subagent { color: var(--hue-subagent); border-color: color-mix(in srgb, var(--hue-subagent) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-subagent) 6%, var(--paper)); }
 .chip.k-mcp      { color: var(--hue-mcp);      border-color: color-mix(in srgb, var(--hue-mcp) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-mcp) 6%, var(--paper)); }
+.chip.k-hook     { color: var(--hue-hook);     border-color: color-mix(in srgb, var(--hue-hook) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-hook) 6%, var(--paper)); }
 
 .chip.r-hot   { background: color-mix(in srgb, currentColor 22%, var(--paper)); font-weight: 600; }
 .chip.r-warm  { background: color-mix(in srgb, currentColor 14%, var(--paper)); }

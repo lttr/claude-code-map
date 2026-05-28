@@ -31,7 +31,7 @@ const CLAUDE = join(HOME, ".claude");
 const CLAUDE_JSON = join(HOME, ".claude.json");
 const pExecFile = promisify(execFile);
 
-export type Kind = "mcp" | "skill" | "command" | "subagent";
+export type Kind = "mcp" | "skill" | "command" | "subagent" | "hook";
 export type Recency = "hot" | "warm" | "cool" | "stale" | "none";
 export type Location =
   | "global"
@@ -101,7 +101,7 @@ export interface CollectResult {
   dormantProjects: number;
   contestedNames: number;
   tally: {
-    counts: { mcp: number; skill: number; command: number; subagent: number };
+    counts: { mcp: number; skill: number; command: number; subagent: number; hook: number };
     invocations7d: number;
     invocations30d: number;
     contested: number;
@@ -376,7 +376,7 @@ function lookupUsage(
   projectPath: string | undefined,
   usage: UsageMaps,
 ): UsageBuckets {
-  if (kind === "mcp") return emptyBuckets();
+  if (kind === "mcp" || kind === "hook") return emptyBuckets();
   const kindPool: ("skill" | "command" | "subagent")[] = kind === "subagent" ? ["subagent"] : ["skill", "command"];
   const keys = pluginName ? [`${pluginName}:${name}`, name] : [name];
   let merged = emptyBuckets();
@@ -542,6 +542,48 @@ async function scanProjectAndPluginMcps(installs: PluginInstall[]): Promise<RawM
   return out;
 }
 
+// ---------- hooks scanning ----------
+// Hooks fire on Claude Code events (PreToolUse, PostToolUse, UserPromptSubmit, …).
+// Sources: settings.json `hooks` block at user/project scope and plugin `hooks/hooks.json`.
+// Docs: https://code.claude.com/docs/en/hooks (and the "Migrate hooks" section of /en/plugins).
+
+interface RawHook {
+  event: string;
+  matcher?: string;
+}
+
+function extractHooks(data: any): RawHook[] {
+  const block = data?.hooks;
+  if (!block || typeof block !== "object") return [];
+  const out: RawHook[] = [];
+  for (const [event, entries] of Object.entries(block)) {
+    if (!Array.isArray(entries)) continue;
+    for (const e of entries as any[]) {
+      const matcher = typeof e?.matcher === "string" && e.matcher ? e.matcher : undefined;
+      out.push({ event, matcher });
+    }
+  }
+  return out;
+}
+
+function nameHook(h: RawHook): string {
+  return h.matcher ? `${h.event}:${h.matcher}` : h.event;
+}
+
+async function readHooksFromSettings(paths: string[]): Promise<RawHook[]> {
+  const out: RawHook[] = [];
+  for (const p of paths) {
+    const d = await readJSON<any>(p);
+    out.push(...extractHooks(d));
+  }
+  return out;
+}
+
+async function readHooksFromPlugin(installPath: string): Promise<RawHook[]> {
+  const d = await readJSON<any>(join(installPath, "hooks", "hooks.json"));
+  return extractHooks(d);
+}
+
 // ---------- main collect ----------
 
 export async function collect(): Promise<CollectResult> {
@@ -599,11 +641,14 @@ export async function collect(): Promise<CollectResult> {
     };
   };
 
-  // Global items (skills/commands/agents under ~/.claude/)
+  // Global items (skills/commands/agents under ~/.claude/, hooks from ~/.claude/settings.json)
   const globalItems: Item[] = [];
   for (const name of await listDir(join(CLAUDE, "skills"))) globalItems.push(makeItem({ kind: "skill", name, location: "global" }));
   for (const name of await listMarkdownItems(join(CLAUDE, "commands"))) globalItems.push(makeItem({ kind: "command", name, location: "global" }));
   for (const name of await listMarkdownItems(join(CLAUDE, "agents"))) globalItems.push(makeItem({ kind: "subagent", name, location: "global" }));
+  for (const h of await readHooksFromSettings([join(CLAUDE, "settings.json")])) {
+    globalItems.push(makeItem({ kind: "hook", name: nameHook(h), location: "global" }));
+  }
 
   // Plugin items (skills/commands/agents) for each install
   for (const inst of installs) {
@@ -625,6 +670,9 @@ export async function collect(): Promise<CollectResult> {
     for (const name of sk) info.items.push(makeItem({ kind: "skill", name, location: loc, ...common }));
     for (const name of cm) info.items.push(makeItem({ kind: "command", name, location: loc, ...common }));
     for (const name of ag) info.items.push(makeItem({ kind: "subagent", name, location: loc, ...common }));
+    for (const h of await readHooksFromPlugin(inst.installPath)) {
+      info.items.push(makeItem({ kind: "hook", name: nameHook(h), location: loc, ...common }));
+    }
   }
 
   // MCPs
@@ -667,6 +715,9 @@ export async function collect(): Promise<CollectResult> {
     for (const name of await listDir(join(claudeDir, "skills")))      items.push(makeItem({ kind: "skill",    name, location: "local", projectPath: p }));
     for (const name of await listMarkdownItems(join(claudeDir, "commands"))) items.push(makeItem({ kind: "command",  name, location: "local", projectPath: p }));
     for (const name of await listMarkdownItems(join(claudeDir, "agents")))   items.push(makeItem({ kind: "subagent", name, location: "local", projectPath: p }));
+    for (const h of await readHooksFromSettings([join(claudeDir, "settings.json"), join(claudeDir, "settings.local.json")])) {
+      items.push(makeItem({ kind: "hook", name: nameHook(h), location: "local", projectPath: p }));
+    }
     if (items.length) localItemsByPath.set(p, items);
   }
 
@@ -740,6 +791,7 @@ export async function collect(): Promise<CollectResult> {
   ];
   const buckets = new Map<string, { items: Item[]; origins: Set<string> }>();
   for (const it of allItems) {
+    if (it.kind === "hook") continue;
     const pool = it.kind === "subagent" ? "subagent" : it.kind === "mcp" ? "mcp" : "skill+command";
     const key = `${pool}::${it.name.toLowerCase()}`;
     if (!buckets.has(key)) buckets.set(key, { items: [], origins: new Set() });
@@ -756,7 +808,7 @@ export async function collect(): Promise<CollectResult> {
   }
 
   // Tally counts: unique items per kind across all locations
-  const uniqueByKind: Record<Kind, Set<string>> = { mcp: new Set(), skill: new Set(), command: new Set(), subagent: new Set() };
+  const uniqueByKind: Record<Kind, Set<string>> = { mcp: new Set(), skill: new Set(), command: new Set(), subagent: new Set(), hook: new Set() };
   for (const it of allItems) uniqueByKind[it.kind].add(it.name.toLowerCase());
 
   let inv7 = 0, inv30 = 0;
@@ -782,6 +834,7 @@ export async function collect(): Promise<CollectResult> {
         skill: uniqueByKind.skill.size,
         command: uniqueByKind.command.size,
         subagent: uniqueByKind.subagent.size,
+        hook: uniqueByKind.hook.size,
       },
       invocations7d: inv7,
       invocations30d: inv30,

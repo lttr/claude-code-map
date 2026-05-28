@@ -7,13 +7,14 @@ const home = (s: string) => (s.startsWith(HOME) ? "~" + s.slice(HOME.length) : s
 const esc = (s: unknown): string =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
-const KIND_LABEL: Record<Kind, string> = { mcp: "MCPs", skill: "skills", command: "commands", subagent: "subagents" };
-const KIND_SINGULAR: Record<Kind, string> = { mcp: "MCP", skill: "skill", command: "command", subagent: "subagent" };
+const KIND_LABEL: Record<Kind, string> = { mcp: "MCPs", skill: "skills", command: "commands", subagent: "subagents", hook: "hooks" };
+const KIND_SINGULAR: Record<Kind, string> = { mcp: "MCP", skill: "skill", command: "command", subagent: "subagent", hook: "hook" };
 const KIND_HUE: Record<Kind, string> = {
   skill: "var(--hue-skill)",
   command: "var(--hue-command)",
   subagent: "var(--hue-subagent)",
   mcp: "var(--hue-mcp)",
+  hook: "var(--hue-hook)",
 };
 
 function chip(item: Item): string {
@@ -48,6 +49,7 @@ function pluginBlock(p: PluginInfo): string {
   const commands = p.items.filter((i) => i.kind === "command");
   const subagents = p.items.filter((i) => i.kind === "subagent");
   const mcps = p.items.filter((i) => i.kind === "mcp");
+  const hooks = p.items.filter((i) => i.kind === "hook");
   const empty = !p.items.length;
   return `
   <div class="plug">
@@ -60,6 +62,7 @@ function pluginBlock(p: PluginInfo): string {
     ${kindSection("commands", commands, "command")}
     ${kindSection("subagents", subagents, "subagent")}
     ${kindSection("MCPs", mcps, "mcp")}
+    ${kindSection("hooks", hooks, "hook")}
     ${empty ? `<div class="muted">— no items</div>` : ""}
   </div>`;
 }
@@ -100,6 +103,7 @@ function compassPlate(): string {
       <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.command}"></span>command — madder</div>
       <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.subagent}"></span>subagent — verdigris</div>
       <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.mcp}"></span>MCP — sepia</div>
+      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.hook}"></span>hook — tyrian</div>
       <h4>Ink density · recency</h4>
       <div class="leg-row"><span class="chip k-skill r-hot">hot</span> ≤ 7 days</div>
       <div class="leg-row"><span class="chip k-skill r-warm">warm</span> ≤ 30 days</div>
@@ -115,6 +119,7 @@ function gazetteer(result: CollectResult): string {
   const gs = global.filter((i) => i.kind === "skill");
   const gc = global.filter((i) => i.kind === "command");
   const ga = global.filter((i) => i.kind === "subagent");
+  const gh = global.filter((i) => i.kind === "hook");
   return `
   <section class="plate">
     <h2 class="plate-title">Global &amp; User Inventory <span class="sub">· Gazetteer</span></h2>
@@ -122,10 +127,11 @@ function gazetteer(result: CollectResult): string {
     <div class="gaz-grid">
       <div class="gaz-col">
         <h3>Global <span class="count">${global.length} item${global.length === 1 ? "" : "s"}</span></h3>
-        <p class="region-note">~/.claude/{skills,commands,agents} — present in every bay.</p>
+        <p class="region-note">~/.claude/{skills,commands,agents} plus hooks from ~/.claude/settings.json — present in every bay.</p>
         ${kindSection("skills", gs, "skill")}
         ${kindSection("commands", gc, "command")}
         ${kindSection("subagents", ga, "subagent")}
+        ${kindSection("hooks", gh, "hook")}
       </div>
       <div class="gaz-col">
         <h3>User Plugins <span class="count">${result.userPlugins.length} plugin${result.userPlugins.length === 1 ? "" : "s"}</span></h3>
@@ -146,6 +152,7 @@ function projectCard(proj: ProjectInfo): string {
   const localSk = local.filter((i) => i.kind === "skill");
   const localCm = local.filter((i) => i.kind === "command");
   const localAg = local.filter((i) => i.kind === "subagent");
+  const localHk = local.filter((i) => i.kind === "hook");
   const a = proj.activity;
   const lastTxt = a.last ? new Date(a.last * 1000).toISOString().slice(0, 10) : "—";
   const summary = a.total ? `${a.total} invocations · last ${lastTxt}` : "no recorded usage";
@@ -159,6 +166,7 @@ function projectCard(proj: ProjectInfo): string {
     ${kindSection("local skills", localSk, "skill")}
     ${kindSection("local commands", localCm, "command")}
     ${kindSection("local subagents", localAg, "subagent")}
+    ${kindSection("local hooks", localHk, "hook")}
     ${proj.projectMcps.length ? kindSection("project MCPs", proj.projectMcps, "mcp") : ""}
     ${proj.scopedPlugins.length ? `<div class="sublabel">scoped plugins <span class="ct">· ${proj.scopedPlugins.length}</span></div>${proj.scopedPlugins.map(pluginBlock).join("")}` : ""}
     ${empty ? `<div class="muted">global &amp; user-scope only</div>` : ""}
@@ -181,6 +189,7 @@ export function renderAtlas(result: CollectResult): string {
     { num: t.counts.skill,    lbl: "Skills" },
     { num: t.counts.command,  lbl: "Commands" },
     { num: t.counts.subagent, lbl: "Subagents" },
+    { num: t.counts.hook,     lbl: "Hooks" },
   ]);
   const tallyB = tallyRow("tally-stats", [
     { num: t.invocations7d,  lbl: "Invocations · 7d" },

@@ -4,8 +4,8 @@ Glossary of terms used in this project. Implementation details belong in code; t
 
 ## Inventoried items
 
-- **Servitor** — generic term in cartographer voice for any item this tool inventories. Concrete kinds: MCP server, skill, slash command, subagent.
-- **Kind** — one of `mcp`, `skill`, `command`, `subagent`. Drives the chip hue and grouping.
+- **Servitor** — generic term in cartographer voice for any item this tool inventories. Concrete kinds: MCP server, skill, slash command, subagent, hook.
+- **Kind** — one of `mcp`, `skill`, `command`, `subagent`, `hook`. Drives the chip hue and grouping. Hooks are passive event handlers (they don't get invoked by name), so they don't accrue usage stats and are excluded from contested-name detection.
 - **Location** — where a servitor lives. Coarse values: `global` (`~/.claude/{skills,commands,agents}`), `user-plugin`, `scoped-plugin`, `local` (project's `.claude/`), and the three MCP scopes below.
 - **MCP scope** — one of `user`, `project`, `local`. MCP-specific subdivision of location, predating the unification.
 
