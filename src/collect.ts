@@ -67,6 +67,8 @@ export interface Item {
   usage: UsageBuckets;
   recency: Recency;
   contested: boolean;
+  // When contested, the other origins (kind · place) that share this name.
+  contestedWith?: string[];
   // Declared references (static body scrape): names this item points to, and
   // names that point back at it. Skills/commands only; empty otherwise.
   refsOut?: string[];
@@ -874,6 +876,22 @@ export async function collect(): Promise<CollectResult> {
       item.projectPath ?? "",
     ].join("|");
   }
+  // Human-readable "kind · place" so a contested chip can explain the clash.
+  const tilde = (p?: string) => (p ? p.replace(HOME, "~") : "?");
+  function originLabel(it: Item): string {
+    let where: string;
+    switch (it.location) {
+      case "global": where = "global"; break;
+      case "user-plugin": where = `plugin ${it.pluginName ?? "?"}`; break;
+      case "scoped-plugin": where = `plugin ${it.pluginName ?? "?"} @ ${tilde(it.projectPath)}`; break;
+      case "local": where = tilde(it.projectPath); break;
+      case "user-mcp": where = "user (~/.claude.json)"; break;
+      case "project-mcp": where = tilde(it.projectPath); break;
+      case "claude-ai-remote": where = "claude.ai"; break;
+      default: where = it.location;
+    }
+    return `${it.kind} · ${where}`;
+  }
   const allItems: Item[] = [
     ...globalItems,
     ...userMcps,
@@ -894,7 +912,12 @@ export async function collect(): Promise<CollectResult> {
   for (const b of buckets.values()) {
     if (b.origins.size > 1) {
       contestedNames++;
-      for (const it of b.items) it.contested = true;
+      const all = [...new Set(b.items.map(originLabel))];
+      for (const it of b.items) {
+        it.contested = true;
+        const self = originLabel(it);
+        it.contestedWith = all.filter((l) => l !== self);
+      }
     }
   }
 

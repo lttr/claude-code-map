@@ -112,6 +112,7 @@
           '<span class="pop-kind">' + d.kind + (d.contested ? " · contested" : "") + (d.loc ? " · " + d.loc : "") + "</span></div>" +
         (d.extra ? '<div class="pop-meta">' + d.extra + "</div>" : "") +
         (d.usage ? '<div class="pop-meta">' + d.usage + "</div>" : "") +
+        (d.contestedWith ? '<div class="pop-meta pop-contested">name also at — ' + d.contestedWith + "</div>" : "") +
         linkRow("depends on", d.out) + linkRow("used by", d.in) +
         (linkable && !d.out && !d.in ? '<div class="pop-none">no declared references</div>' : "");
       document.body.appendChild(pop);

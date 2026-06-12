@@ -54,7 +54,7 @@ function chip(item: Item): string {
   const data =
     ` data-name="${esc(item.name.toLowerCase())}" data-label="${esc(item.name)}" data-kind="${item.kind}"` +
     ` data-loc="${esc(item.location)}"${usageLine ? ` data-usage="${esc(usageLine)}"` : ""}${extra ? ` data-extra="${esc(extra)}"` : ""}` +
-    `${out.length ? ` data-out="${esc(out.join(","))}"` : ""}${inn.length ? ` data-in="${esc(inn.join(","))}"` : ""}${item.contested ? ` data-contested="1"` : ""}`;
+    `${out.length ? ` data-out="${esc(out.join(","))}"` : ""}${inn.length ? ` data-in="${esc(inn.join(","))}"` : ""}${item.contested ? ` data-contested="1"` : ""}${item.contestedWith?.length ? ` data-contested-with="${esc(item.contestedWith.join("; "))}"` : ""}`;
   const ext = item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
   // Route marker, revealed only in relations mode: →n outgoing, ←n incoming.
   const mark = (out.length || inn.length)
@@ -133,11 +133,11 @@ function compassPlate(): string {
     </svg>
     <div class="compass-legend">
       <p class="leg-head">Kinds</p>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.skill}"></span>skill — iron-gall</div>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.command}"></span>command — madder</div>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.subagent}"></span>subagent — verdigris</div>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.mcp}"></span>MCP — sepia</div>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.hook}"></span>hook — tyrian</div>
+      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.skill}"></span>skill</div>
+      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.command}"></span>command</div>
+      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.subagent}"></span>subagent</div>
+      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.mcp}"></span>MCP</div>
+      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.hook}"></span>hook</div>
       <p class="leg-head">Ink density · recency</p>
       <div class="leg-row"><span class="chip k-skill r-hot">hot</span> ≤ 7 days</div>
       <div class="leg-row"><span class="chip k-skill r-warm">warm</span> ≤ 30 days</div>
