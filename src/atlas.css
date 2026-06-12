@@ -77,12 +77,12 @@ h1.title em { font-style: italic; color: var(--accent); }
 .loading-mark { font-size: 48px; color: var(--rule); animation: pulse 1.4s ease-in-out infinite; }
 .loading-text {
   font-family: "IM Fell English SC", serif; letter-spacing: .25em;
-  font-size: 14px; color: var(--ink-faint); text-transform: uppercase; margin-top: 8px;
+  font-size: 15px; color: var(--ink-faint); text-transform: uppercase; margin-top: 8px;
 }
 .atlas-error {
   margin: 36px auto 0; max-width: 800px; padding: 20px;
   border: 1px solid var(--accent); background: rgba(162, 74, 42, 0.08);
-  color: var(--accent); font-family: "JetBrains Mono", monospace; font-size: 14px;
+  color: var(--accent); font-family: "JetBrains Mono", monospace; font-size: 15px;
 }
 @keyframes pulse {
   0%, 100% { opacity: .55; transform: scale(1); }
@@ -114,7 +114,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 .tally.tally-stats .num { font-size: 38px; }
 .tally .lbl {
   font-family: "IM Fell English SC", serif; letter-spacing: .22em;
-  font-size: 14px; color: var(--ink-faint); text-transform: uppercase; margin-top: 8px;
+  font-size: 15px; color: var(--ink-faint); text-transform: uppercase; margin-top: 8px;
 }
 
 /* Compass plate */
@@ -143,7 +143,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 .compass-legend .leg-head {
   margin: 0 0 2px; grid-column: 1 / -1;
   font-family: "IM Fell English SC", serif; letter-spacing: .2em;
-  font-size: 14px; color: var(--ink-faint); text-transform: uppercase;
+  font-size: 15px; color: var(--ink-faint); text-transform: uppercase;
   border-bottom: 1px solid var(--rule); padding-bottom: 4px;
 }
 .compass-legend .leg-head + .leg-row { margin-top: 2px; }
@@ -194,7 +194,7 @@ h1.title em { font-style: italic; color: var(--accent); }
   cursor: pointer;
 }
 .chip .ext {
-  font-family: "JetBrains Mono", monospace; font-size: 14px;
+  font-family: "JetBrains Mono", monospace; font-size: 15px;
   letter-spacing: 0; opacity: .65;
 }
 .chip.k-skill    { color: var(--hue-skill);    border-color: color-mix(in srgb, var(--hue-skill) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-skill) 6%, var(--paper)); }
@@ -230,7 +230,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 
 .chip.contested::after {
   content: "✦"; color: var(--accent); margin-left: 2px;
-  font-family: "IM Fell English", serif; font-size: 14px; vertical-align: super;
+  font-family: "IM Fell English", serif; font-size: 15px; vertical-align: super;
 }
 
 /* Relations plate — declared skill/command references, behind a toggle knob */
@@ -238,7 +238,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 .amb-key.amb { color: var(--accent); }
 .rel-knob {
   margin-left: auto; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
-  font-family: "IM Fell English SC", serif; font-size: 14px; letter-spacing: .12em;
+  font-family: "IM Fell English SC", serif; font-size: 15px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--ink-faint);
 }
 .rel-knob input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -272,13 +272,13 @@ h1.title em { font-style: italic; color: var(--accent); }
 .rel-to.k-skill   { color: var(--hue-skill); }
 .rel-to.k-command { color: var(--hue-command); }
 .rel-to.amb { color: var(--accent); }
-.rel-to .q { vertical-align: super; font-size: 14px; margin-left: 1px; }
+.rel-to .q { vertical-align: super; font-size: 15px; margin-left: 1px; }
 
 /* Per-chip route marker — only surfaces in relations mode (knob on), so the
    default view stays clean. Participating chips also get a faint accent ring. */
 .rel-mark {
   display: none; margin-left: 4px; font-family: "JetBrains Mono", monospace;
-  font-size: 14px; letter-spacing: 0; color: var(--accent); opacity: .9;
+  font-size: 15px; letter-spacing: 0; color: var(--accent); opacity: .9;
 }
 #atlas:has(#rel-toggle:checked) .chip.has-rel .rel-mark { display: inline; }
 #atlas:has(#rel-toggle:checked) .chip.has-rel {
@@ -309,30 +309,30 @@ h1.title em { font-style: italic; color: var(--accent); }
 .pop-name.k-mcp { color: var(--hue-mcp); }
 .pop-name.k-hook { color: var(--hue-hook); }
 .pop-kind {
-  font-family: "IM Fell English SC", serif; font-size: 14px; letter-spacing: .1em;
+  font-family: "IM Fell English SC", serif; font-size: 15px; letter-spacing: .1em;
   text-transform: uppercase; color: var(--ink-faint);
 }
-.pop-meta { font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ink-soft); margin: 2px 0; }
+.pop-meta { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--ink-soft); margin: 2px 0; }
 .pop-contested { color: var(--accent); }
 .pop-sec { display: flex; gap: 8px; margin-top: 7px; align-items: baseline; flex-wrap: wrap; }
 .pop-lbl {
-  font-family: "IM Fell English SC", serif; font-size: 14px; letter-spacing: .1em;
+  font-family: "IM Fell English SC", serif; font-size: 15px; letter-spacing: .1em;
   text-transform: uppercase; color: var(--ink-faint); flex: 0 0 auto;
 }
 .pop-links { display: flex; flex-wrap: wrap; gap: 4px 6px; }
 .pop-link {
-  font-family: "IM Fell English", serif; font-size: 14px; cursor: pointer;
+  font-family: "IM Fell English", serif; font-size: 15px; cursor: pointer;
   background: color-mix(in srgb, var(--accent) 8%, var(--paper));
   border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
   color: var(--accent); border-radius: 10px; padding: 1px 8px;
 }
 .pop-link:hover { background: color-mix(in srgb, var(--accent) 18%, var(--paper)); }
-.pop-none { font-style: italic; color: var(--ink-faint); margin-top: 6px; font-size: 14px; }
+.pop-none { font-style: italic; color: var(--ink-faint); margin-top: 6px; font-size: 15px; }
 
 /* Sublabels under columns/cards */
 .sublabel {
   display: inline-block; font-family: "IM Fell English SC", serif; letter-spacing: .18em;
-  font-size: 14px; color: var(--ink-faint); text-transform: uppercase;
+  font-size: 15px; color: var(--ink-faint); text-transform: uppercase;
   margin: 8px 0 2px;
 }
 .sublabel .ct { font-family: "IM Fell English", serif; font-style: italic; letter-spacing: 0; text-transform: none; color: var(--ink-faint); }
@@ -348,7 +348,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 }
 .region h2 .sub {
   font-family: "IM Fell English SC", serif; font-style: normal; letter-spacing: .2em;
-  font-size: 14px; color: var(--ink-faint); margin-left: auto; text-transform: uppercase;
+  font-size: 15px; color: var(--ink-faint); margin-left: auto; text-transform: uppercase;
 }
 .project-list {
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px;
@@ -360,9 +360,9 @@ h1.title em { font-style: italic; color: var(--accent); }
 }
 .proj-card.empty { opacity: .7; }
 .proj-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
-.proj-path { font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ink); font-weight: 500; }
+.proj-path { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--ink); font-weight: 500; }
 .proj-activity {
-  margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 14px;
+  margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 15px;
   color: var(--ink-faint); letter-spacing: .04em;
 }
 
@@ -376,12 +376,12 @@ h1.title em { font-style: italic; color: var(--accent); }
   font-family: "IM Fell English", serif; font-size: 15px; color: var(--ink);
   display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
 }
-.plug-name { font-family: "JetBrains Mono", monospace; font-size: 14px; font-weight: 500; }
+.plug-name { font-family: "JetBrains Mono", monospace; font-size: 15px; font-weight: 500; }
 .plug-meta {
-  font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ink-faint);
+  font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--ink-faint);
 }
 .plug-status {
-  font-family: "IM Fell English SC", serif; letter-spacing: .14em; font-size: 14px;
+  font-family: "IM Fell English SC", serif; letter-spacing: .14em; font-size: 15px;
   text-transform: uppercase; padding: 1px 5px; border: 1px solid;
 }
 .plug-status.s-active   { color: var(--accent-2); border-color: var(--accent-2); }
@@ -390,7 +390,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 .colophon {
   margin: 48px 0 0; display: flex; justify-content: space-between; align-items: baseline;
   font-family: "IM Fell English SC", serif; letter-spacing: .22em;
-  font-size: 14px; color: var(--ink-faint); text-transform: uppercase;
+  font-size: 15px; color: var(--ink-faint); text-transform: uppercase;
   border-top: 1px solid var(--rule); padding-top: 14px;
 }
 .colophon em {
@@ -398,7 +398,7 @@ h1.title em { font-style: italic; color: var(--accent); }
   text-transform: none; color: var(--ink-soft); font-size: 16px;
 }
 
-.muted { color: var(--ink-faint); font-style: italic; font-size: 14px; }
+.muted { color: var(--ink-faint); font-style: italic; font-size: 15px; }
 
 /* ── Responsive ─────────────────────────────────────────────── */
 
@@ -415,7 +415,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 @media (max-width: 720px) {
   body { font-size: 16px; }
   .page { padding: 28px 20px 40px; margin: 0 auto; box-shadow: none; }
-  .eyebrow { font-size: 14px; letter-spacing: .25em; }
+  .eyebrow { font-size: 15px; letter-spacing: .25em; }
   h1.title { font-size: 40px; }
   .subtitle { font-size: 16px; }
   .rule-orn .line { flex-basis: 60px; }
@@ -438,13 +438,13 @@ h1.title em { font-style: italic; color: var(--accent); }
   .gaz-col:last-child { border-bottom: none; }
 
   .region h2 { font-size: 24px; }
-  .region h2 .sub { display: block; margin: 4px 0 0; font-size: 14px; }
+  .region h2 .sub { display: block; margin: 4px 0 0; font-size: 15px; }
   .project-list { grid-template-columns: 1fr; gap: 12px; }
   .proj-head { flex-wrap: wrap; }
   .proj-activity { margin-left: 0; flex-basis: 100%; }
 
   .colophon { flex-direction: column; gap: 6px; text-align: center; letter-spacing: .14em; }
-  .chip { font-size: 14px; }
+  .chip { font-size: 15px; }
 }
 
 @media (max-width: 420px) {
