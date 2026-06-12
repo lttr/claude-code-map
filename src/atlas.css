@@ -376,6 +376,21 @@ h1.title em { font-style: italic; color: var(--accent); }
 .lf-k.k-subagent{ color: var(--hue-subagent); }
 .lf-v { font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ink-faint); white-space: nowrap; }
 .lf-v.bad { color: var(--accent); font-weight: 600; }
+.lf-sub { color: var(--ink-faint); font-size: 14px; margin-left: 6px; }
+
+/* Expandable source rows — summary mimics a normal lf-list row, opening to a
+   tray of the cold items it ships. */
+.lf-list li.lf-exp { display: block; padding: 0; }
+.lf-exp > details > summary {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+  padding: 3px 0; cursor: pointer; list-style: none;
+}
+.lf-exp > details > summary::-webkit-details-marker { display: none; }
+.lf-exp > details > summary .lf-k::before { content: "▸ "; color: var(--accent); }
+.lf-exp > details[open] > summary .lf-k::before { content: "▾ "; }
+.lf-exp > details > summary:hover .lf-k { text-decoration: underline; }
+.lf-exp > details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lf-items { display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 6px 0 8px 14px; }
 
 /* Contested rows stack the name above its origins so long paths stay readable */
 .lf-clash { flex-direction: column; align-items: stretch; gap: 5px; }

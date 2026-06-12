@@ -139,17 +139,18 @@ function flattenItems(result: CollectResult): Item[] {
 
 // Never-invoked instances grouped by the source that ships them — surfaces whole
 // dead installs (a plugin where 0/15 commands were ever called).
-function deadBySource(result: CollectResult): { label: string; dead: number; total: number }[] {
-  const roll = new Map<string, { dead: number; total: number }>();
+type DeadSource = { label: string; dead: number; total: number; items: { name: string; kind: Kind }[] };
+function deadBySource(result: CollectResult): DeadSource[] {
+  const roll = new Map<string, { dead: number; total: number; items: { name: string; kind: Kind }[] }>();
   const add = (label: string, items: Item[]) => {
     for (const it of counted(items)) {
-      const e = roll.get(label) ?? { dead: 0, total: 0 };
+      const e = roll.get(label) ?? { dead: 0, total: 0, items: [] };
       e.total++;
-      if (it.usage.total === 0) e.dead++;
+      if (it.usage.total === 0) { e.dead++; e.items.push({ name: it.name, kind: it.kind }); }
       roll.set(label, e);
     }
   };
-  add("global · ~/.claude", result.globalItems);
+  add("global", result.globalItems);
   if (result.userMcps.length) add("user MCPs", result.userMcps);
   for (const p of result.userPlugins) add(`plugin · ${p.name}`, p.items);
   for (const r of result.regions) {
@@ -207,6 +208,13 @@ function lfRow(k: string, v: string, bad = false): string {
   return `<li><span class="lf-k">${esc(k)}</span><span class="lf-v${bad ? " bad" : ""}">${esc(v)}</span></li>`;
 }
 
+// A button that scrolls to and flashes the matching map chip(s) — reuses the
+// popover's delegated `.pop-link` handler, so clicking jumps to the item.
+function flashLink(name: string, kind?: Kind): string {
+  const cls = kind ? ` k-${kind}` : "";
+  return `<button type="button" class="pop-link${cls}" data-target="${esc(name.toLowerCase())}">${esc(name)}</button>`;
+}
+
 function ledgerPlate(result: CollectResult): string {
   const all = flattenItems(result);
   const countedAll = counted(all);
@@ -217,7 +225,18 @@ function ledgerPlate(result: CollectResult): string {
   const dead = deadBySource(result);
   const deadShown = dead.slice(0, 8);
   const deadRows = deadShown
-    .map((d) => lfRow(d.label, `${d.dead}/${d.total}`, d.dead === d.total))
+    .map((d) => {
+      const allCold = d.dead === d.total;
+      const links = [...d.items]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((i) => flashLink(i.name, i.kind))
+        .join("");
+      // Each row opens to the exact cold items — click one to jump to it on the
+      // map and check its last-used date before pruning.
+      return `<li class="lf-exp"><details>` +
+        `<summary><span class="lf-k">${esc(d.label)}</span><span class="lf-v${allCold ? " bad" : ""}">${d.dead}/${d.total}</span></summary>` +
+        `<div class="lf-items">${links}</div></details></li>`;
+    })
     .join("");
   const deadMore = dead.length > deadShown.length
     ? `<div class="lf-more">+ ${dead.length - deadShown.length} more source${dead.length - deadShown.length === 1 ? "" : "s"} with dead items</div>`
@@ -228,7 +247,9 @@ function ledgerPlate(result: CollectResult): string {
   const totalInv = topUsed(all, 1e9).reduce((s, i) => s + i.usage.total, 0);
   const topInv = top.reduce((s, i) => s + i.usage.total, 0);
   const share = totalInv ? Math.round((topInv / totalInv) * 100) : 0;
-  const topRows = top.map((i) => lfRow(`${i.name}  ·  ${KIND_SINGULAR[i.kind]}`, `${i.usage.total}`)).join("");
+  const topRows = top
+    .map((i) => `<li><span class="lf-k">${flashLink(i.name, i.kind)}<span class="lf-sub">· ${KIND_SINGULAR[i.kind]}</span></span><span class="lf-v">${i.usage.total}</span></li>`)
+    .join("");
 
   // Contested
   const groups = contestedGroups(all);
@@ -258,7 +279,7 @@ function ledgerPlate(result: CollectResult): string {
     <div class="ledger-grid">
       <div class="ledger-find">
         <div class="lf-head"><span class="lf-num">${deadCount}</span><span class="lf-cap">never invoked · of ${totalCount}</span></div>
-        <p class="lf-note">Installed items with zero recorded use, by source. Prune candidates — a source showing <code>n/n</code> is entirely cold.</p>
+        <p class="lf-note">Installed items with zero recorded use, by source. Prune candidates — a source showing <code>n/n</code> is entirely cold. Open a row for its cold items; click one to find it on the map.</p>
         <ul class="lf-list">${deadRows}</ul>${deadMore}
         <details class="lf-how">
           <summary>How to prune</summary>
