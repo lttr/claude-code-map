@@ -90,6 +90,7 @@ function pluginBlock(p: PluginInfo): string {
     <div class="plug-head">
       <span class="plug-name">${esc(p.name)}</span>
       <span class="plug-status s-${p.status}" title="${esc(p.statusNote)}">${p.status}</span>
+      ${useBadge(p.items)}
       <span class="plug-meta">@ ${esc(p.marketplace)}${p.version ? " · v" + esc(p.version) : ""}</span>
     </div>
     ${kindSection("skills", skills, "skill")}
@@ -103,6 +104,180 @@ function pluginBlock(p: PluginInfo): string {
 
 function tallyRow(rowClass: string, cells: { num: number | string; lbl: string }[]): string {
   return `<div class="tally ${rowClass}">${cells.map((c) => `<div><div class="num">${esc(c.num)}</div><div class="lbl">${esc(c.lbl)}</div></div>`).join("")}</div>`;
+}
+
+// ---- Ledger: derived health findings ----
+// Hooks are passive (never invoked by name), so every usage-based finding excludes
+// them — otherwise they'd read as dead code.
+const counted = (items: Item[]): Item[] => items.filter((i) => i.kind !== "hook");
+
+function usageFrac(items: Item[]): { used: number; total: number } {
+  const c = counted(items);
+  return { used: c.filter((i) => i.usage.total > 0).length, total: c.length };
+}
+
+// Small "used/total" badge for a plugin or project's installed surface. Empty when
+// the source ships nothing countable. Red when nothing's ever been invoked.
+function useBadge(items: Item[]): string {
+  const { used, total } = usageFrac(items);
+  if (!total) return "";
+  const cls = used === 0 ? "use-badge none" : used === total ? "use-badge full" : "use-badge";
+  return `<span class="${cls}" title="${used} of ${total} ever invoked">${used}/${total} used</span>`;
+}
+
+function flattenItems(result: CollectResult): Item[] {
+  const out: Item[] = [...result.globalItems, ...result.userMcps];
+  for (const p of result.userPlugins) out.push(...p.items);
+  for (const r of result.regions) {
+    for (const proj of r.projects) {
+      out.push(...proj.localItems, ...proj.projectMcps);
+      for (const sp of proj.scopedPlugins) out.push(...sp.items);
+    }
+  }
+  return out;
+}
+
+// Never-invoked instances grouped by the source that ships them — surfaces whole
+// dead installs (a plugin where 0/15 commands were ever called).
+function deadBySource(result: CollectResult): { label: string; dead: number; total: number }[] {
+  const roll = new Map<string, { dead: number; total: number }>();
+  const add = (label: string, items: Item[]) => {
+    for (const it of counted(items)) {
+      const e = roll.get(label) ?? { dead: 0, total: 0 };
+      e.total++;
+      if (it.usage.total === 0) e.dead++;
+      roll.set(label, e);
+    }
+  };
+  add("global · ~/.claude", result.globalItems);
+  if (result.userMcps.length) add("user MCPs", result.userMcps);
+  for (const p of result.userPlugins) add(`plugin · ${p.name}`, p.items);
+  for (const r of result.regions) {
+    for (const proj of r.projects) {
+      add(home(proj.path), [...proj.localItems, ...proj.projectMcps]);
+      for (const sp of proj.scopedPlugins) add(`plugin · ${sp.name}`, sp.items);
+    }
+  }
+  return [...roll.entries()]
+    .map(([label, e]) => ({ label, ...e }))
+    .filter((e) => e.dead > 0)
+    .sort((a, b) => b.dead - a.dead || b.total - a.total);
+}
+
+// Top items by lifetime invocations, deduped by kind+name.
+function topUsed(items: Item[], n: number): Item[] {
+  const best = new Map<string, Item>();
+  for (const it of counted(items)) {
+    if (it.usage.total === 0) continue;
+    const k = `${it.kind}:${it.name.toLowerCase()}`;
+    const cur = best.get(k);
+    if (!cur || it.usage.total > cur.usage.total) best.set(k, it);
+  }
+  return [...best.values()].sort((a, b) => b.usage.total - a.usage.total).slice(0, n);
+}
+
+// Contested names with their full origin set. Each item carries contestedWith =
+// every origin but its own; the union across a name's items is the full set.
+function contestedGroups(items: Item[]): { name: string; kind: Kind; origins: string[] }[] {
+  const g = new Map<string, { kind: Kind; origins: Set<string> }>();
+  for (const it of items) {
+    if (!it.contested) continue;
+    const key = it.name.toLowerCase();
+    const e = g.get(key) ?? { kind: it.kind, origins: new Set<string>() };
+    for (const o of it.contestedWith ?? []) e.origins.add(o);
+    g.set(key, e);
+  }
+  return [...g.entries()]
+    .map(([name, e]) => ({ name, kind: e.kind, origins: [...e.origins].sort() }))
+    .sort((a, b) => b.origins.length - a.origins.length || a.name.localeCompare(b.name));
+}
+
+function archivedPlugins(result: CollectResult): { name: string; where: string }[] {
+  const out: { name: string; where: string }[] = [];
+  for (const p of result.userPlugins) if (p.status === "archived") out.push({ name: p.name, where: "user scope" });
+  for (const r of result.regions) {
+    for (const proj of r.projects) {
+      for (const sp of proj.scopedPlugins) if (sp.status === "archived") out.push({ name: sp.name, where: home(proj.path) });
+    }
+  }
+  return out;
+}
+
+function lfRow(k: string, v: string, bad = false): string {
+  return `<li><span class="lf-k">${esc(k)}</span><span class="lf-v${bad ? " bad" : ""}">${esc(v)}</span></li>`;
+}
+
+function ledgerPlate(result: CollectResult): string {
+  const all = flattenItems(result);
+  const countedAll = counted(all);
+  const deadCount = countedAll.filter((i) => i.usage.total === 0).length;
+  const totalCount = countedAll.length;
+
+  // Dead weight by source
+  const dead = deadBySource(result);
+  const deadShown = dead.slice(0, 8);
+  const deadRows = deadShown
+    .map((d) => lfRow(d.label, `${d.dead}/${d.total}`, d.dead === d.total))
+    .join("");
+  const deadMore = dead.length > deadShown.length
+    ? `<div class="lf-more">+ ${dead.length - deadShown.length} more source${dead.length - deadShown.length === 1 ? "" : "s"} with dead items</div>`
+    : "";
+
+  // Concentration
+  const top = topUsed(all, 6);
+  const totalInv = topUsed(all, 1e9).reduce((s, i) => s + i.usage.total, 0);
+  const topInv = top.reduce((s, i) => s + i.usage.total, 0);
+  const share = totalInv ? Math.round((topInv / totalInv) * 100) : 0;
+  const topRows = top.map((i) => lfRow(`${i.name}  ·  ${KIND_SINGULAR[i.kind]}`, `${i.usage.total}`)).join("");
+
+  // Contested
+  const groups = contestedGroups(all);
+  const cShown = groups.slice(0, 10);
+  const cRows = cShown
+    .map((g) => `<li><span class="lf-k k-${g.kind}">${esc(g.name)}</span><span class="lf-origins">${esc(g.origins.join("  ·  "))}</span></li>`)
+    .join("");
+  const cMore = groups.length > cShown.length
+    ? `<div class="lf-more">+ ${groups.length - cShown.length} more contested name${groups.length - cShown.length === 1 ? "" : "s"}</div>`
+    : "";
+
+  // Attrition / cruft
+  const archived = archivedPlugins(result);
+  const cruftRows = [
+    lfRow("dormant projects", `${result.dormantProjects}`, result.dormantProjects > 0),
+    lfRow("missing dirs (dropped)", `${result.droppedProjects}`, result.droppedProjects > 0),
+    lfRow("archived plugins still installed", `${archived.length}`, archived.length > 0),
+  ].join("");
+  const archNote = archived.length
+    ? `<div class="lf-more">${archived.map((a) => `${esc(a.name)} (${esc(a.where)})`).join(", ")}</div>`
+    : "";
+
+  return `
+  <section class="plate ledger-plate">
+    <h2 class="plate-title">Surveyor's Ledger <span class="sub">· health &amp; attrition</span></h2>
+    <p class="plate-note">Derived findings — what the map says once you stop reading it as a map. Hooks excluded from usage counts (they fire passively).</p>
+    <div class="ledger-grid">
+      <div class="ledger-find">
+        <div class="lf-head"><span class="lf-num">${deadCount}</span><span class="lf-cap">never invoked · of ${totalCount}</span></div>
+        <p class="lf-note">Installed items with zero recorded use, by source. Prune candidates — a source showing <code>n/n</code> is entirely cold.</p>
+        <ul class="lf-list">${deadRows}</ul>${deadMore}
+      </div>
+      <div class="ledger-find">
+        <div class="lf-head"><span class="lf-num">${share}%</span><span class="lf-cap">from the top ${top.length}</span></div>
+        <p class="lf-note">Concentration of all ${totalInv} recorded invocations. A small active core carries the setup.</p>
+        <ul class="lf-list">${topRows}</ul>
+      </div>
+      <div class="ledger-find">
+        <div class="lf-head"><span class="lf-num">${result.tally.contested}</span><span class="lf-cap">contested names</span></div>
+        <p class="lf-note">A name resolving to 2+ implementations — resolution is ambiguous. Dedupe to control which one wins.</p>
+        <ul class="lf-list">${cRows || `<li class="muted">— none</li>`}</ul>${cMore}
+      </div>
+      <div class="ledger-find">
+        <div class="lf-head"><span class="lf-num">${result.dormantProjects + result.droppedProjects + archived.length}</span><span class="lf-cap">attrition &amp; cruft</span></div>
+        <p class="lf-note">Stale wiring: projects with no activity, vanished directories, plugins from archived marketplaces.</p>
+        <ul class="lf-list">${cruftRows}</ul>${archNote}
+      </div>
+    </div>
+  </section>`;
 }
 
 function compassPlate(): string {
@@ -132,21 +307,33 @@ function compassPlate(): string {
       <circle r="3" fill="var(--ink)"/>
     </svg>
     <div class="compass-legend">
-      <p class="leg-head">Kinds</p>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.skill}"></span>skill</div>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.command}"></span>command</div>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.subagent}"></span>subagent</div>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.mcp}"></span>MCP</div>
-      <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.hook}"></span>hook</div>
-      <p class="leg-head">Ink density · recency</p>
-      <div class="leg-row"><span class="chip k-skill r-hot">hot</span> ≤ 7 days</div>
-      <div class="leg-row"><span class="chip k-skill r-warm">warm</span> ≤ 30 days</div>
-      <div class="leg-row"><span class="chip k-skill r-cool">cool</span> ≤ 90 days</div>
-      <div class="leg-row"><span class="chip k-skill r-stale">stale</span> older</div>
-      <div class="leg-row"><span class="chip k-skill r-none">none</span> never invoked</div>
-      <div class="leg-row"><span class="chip k-hook">hook</span> passive · not counted</div>
-      <p class="leg-head">Marks</p>
-      <div class="leg-row"><span class="chip k-skill r-warm contested">name</span> contested · 2+ items share this name</div>
+      <div class="leg-col">
+        <div class="leg-group">
+          <p class="leg-head">Kinds</p>
+          <span class="leg-sample"><span class="swatch" style="background:${KIND_HUE.skill}"></span></span><span class="leg-desc">skill</span>
+          <span class="leg-sample"><span class="swatch" style="background:${KIND_HUE.command}"></span></span><span class="leg-desc">command</span>
+          <span class="leg-sample"><span class="swatch" style="background:${KIND_HUE.subagent}"></span></span><span class="leg-desc">subagent</span>
+          <span class="leg-sample"><span class="swatch" style="background:${KIND_HUE.mcp}"></span></span><span class="leg-desc">MCP</span>
+          <span class="leg-sample"><span class="swatch" style="background:${KIND_HUE.hook}"></span></span><span class="leg-desc">hook</span>
+        </div>
+      </div>
+      <div class="leg-col">
+        <div class="leg-group">
+          <p class="leg-head">Ink density · recency</p>
+          <span class="leg-sample"><span class="chip k-skill r-hot">hot</span></span><span class="leg-desc">≤ 7 days</span>
+          <span class="leg-sample"><span class="chip k-skill r-warm">warm</span></span><span class="leg-desc">≤ 30 days</span>
+          <span class="leg-sample"><span class="chip k-skill r-cool">cool</span></span><span class="leg-desc">≤ 90 days</span>
+          <span class="leg-sample"><span class="chip k-skill r-stale">stale</span></span><span class="leg-desc">older</span>
+          <span class="leg-sample"><span class="chip k-skill r-none">none</span></span><span class="leg-desc">never invoked</span>
+          <span class="leg-sample"><span class="chip k-hook">hook</span></span><span class="leg-desc">passive · not counted</span>
+        </div>
+      </div>
+      <div class="leg-col">
+        <div class="leg-group">
+          <p class="leg-head">Marks</p>
+          <span class="leg-sample"><span class="chip k-skill r-warm contested">name</span></span><span class="leg-desc">contested · 2+ items share this name</span>
+        </div>
+      </div>
     </div>
   </div>`;
 }
@@ -221,6 +408,7 @@ function projectCard(proj: ProjectInfo): string {
     <div class="proj-head">
       <span class="proj-path">${esc(home(proj.path))}</span>
       <span class="proj-activity" title="7d:${a.d7} 30d:${a.d30} 90d:${a.d90} total:${a.total}">${esc(summary)}</span>
+      ${useBadge([...local, ...proj.projectMcps, ...proj.scopedPlugins.flatMap((sp) => sp.items)])}
     </div>
     ${kindSection("local skills", localSk, "skill")}
     ${kindSection("local commands", localCm, "command")}
@@ -260,6 +448,7 @@ export function renderAtlas(result: CollectResult): string {
 ${tallyA}
 ${tallyB}
 ${compassPlate()}
+${ledgerPlate(result)}
 ${gazetteer(result)}
 ${relationsPlate(result)}
 <section class="plate">
