@@ -119,7 +119,7 @@ h1.title em { font-style: italic; color: var(--accent); }
 
 /* Compass plate */
 .compass-wrap {
-  display: flex; align-items: center; gap: 36px;
+  display: flex; align-items: center; justify-content: center; gap: 64px;
   margin: 40px 0 12px; padding: 18px 24px;
   border: 1px solid var(--rule);
   background: rgba(239, 227, 200, 0.35);
@@ -130,7 +130,7 @@ h1.title em { font-style: italic; color: var(--accent); }
   border: 1px solid var(--rule); opacity: .4; pointer-events: none;
 }
 .compass-svg { flex: 0 0 220px; }
-.compass-legend { flex: 1; display: flex; gap: 48px; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; }
+.compass-legend { flex: 0 1 auto; display: flex; gap: 56px; flex-wrap: wrap; align-items: flex-start; }
 .compass-legend .leg-col { display: flex; flex-direction: column; gap: 18px; }
 /* Sanborn-key tabular alignment: a shared sample gutter so every description
    lines up in its own column regardless of swatch/chip width. */
