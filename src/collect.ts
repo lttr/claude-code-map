@@ -194,7 +194,7 @@ function recencyOf(b: UsageBuckets | undefined): Recency {
 interface TranscriptEvent {
   ts: number;
   project: string;
-  kind: "skill" | "command" | "subagent";
+  kind: "skill" | "command" | "subagent" | "mcp";
   name: string;
 }
 
@@ -232,6 +232,11 @@ const reSk = /"name"\s*:\s*"Skill"\s*,\s*"input"\s*:\s*\{\s*"skill"\s*:\s*"([^"]
 const reCmd = /<command-name>\/?([^<]+)<\/command-name>/g;
 const reSub = /"subagent_type"\s*:\s*"([^"]+)"/g;
 const reSkRead = /"file_path"\s*:\s*"[^"]*\.claude\/[^"]*skills\/([^/"]+)\/SKILL\.md"/g;
+// MCP tool calls surface as tool_use blocks named mcp__<server>__<tool>, always
+// followed by "input". The trailing ,"input" guard excludes tool *listings* (bare
+// names in allowed-tools arrays). Server key = segment between the first and second
+// "__" (servers/tools use single underscores, so non-greedy stops at the right place).
+const reMcp = /"name"\s*:\s*"mcp__([A-Za-z0-9_]+?)__[A-Za-z0-9_]+"\s*,\s*"input"/g;
 
 async function parseTranscriptFile(filePath: string, fallback: string): Promise<TranscriptEvent[]> {
   const events: TranscriptEvent[] = [];
@@ -245,7 +250,8 @@ async function parseTranscriptFile(filePath: string, fallback: string): Promise<
     const hasCmd = line.includes("<command-name>");
     const hasSub = line.includes('"subagent_type"');
     const hasRead = line.includes("/SKILL.md") && line.includes(".claude/");
-    if (!hasSk && !hasCmd && !hasSub && !hasRead) continue;
+    const hasMcp = line.includes('"mcp__');
+    if (!hasSk && !hasCmd && !hasSub && !hasRead && !hasMcp) continue;
     const tsM = line.match(reTs);
     if (!tsM) continue;
     const ts = Date.parse(tsM[1]) / 1000;
@@ -255,19 +261,24 @@ async function parseTranscriptFile(filePath: string, fallback: string): Promise<
     if (hasCmd) { reCmd.lastIndex = 0; let m; while ((m = reCmd.exec(line))) events.push({ ts, project, kind: "command", name: m[1] }); }
     if (hasSub) { reSub.lastIndex = 0; let m; while ((m = reSub.exec(line))) events.push({ ts, project, kind: "subagent", name: m[1] }); }
     if (hasRead) { reSkRead.lastIndex = 0; let m; while ((m = reSkRead.exec(line))) events.push({ ts, project, kind: "skill", name: m[1] }); }
+    if (hasMcp) { reMcp.lastIndex = 0; let m; while ((m = reMcp.exec(line))) events.push({ ts, project, kind: "mcp", name: m[1] }); }
   }
   return events;
 }
 
+type UsageKind = "skill" | "command" | "subagent" | "mcp";
+type KindMaps = Record<UsageKind, Map<string, UsageBuckets>>;
+const emptyKindMaps = (): KindMaps => ({ skill: new Map(), command: new Map(), subagent: new Map(), mcp: new Map() });
+
 interface UsageMaps {
-  global: { skill: Map<string, UsageBuckets>; command: Map<string, UsageBuckets>; subagent: Map<string, UsageBuckets> };
-  perProject: Map<string, { skill: Map<string, UsageBuckets>; command: Map<string, UsageBuckets>; subagent: Map<string, UsageBuckets> }>;
+  global: KindMaps;
+  perProject: Map<string, KindMaps>;
 }
 
 async function buildUsage(): Promise<UsageMaps> {
   const projectsDir = join(CLAUDE, "projects");
   const usage: UsageMaps = {
-    global: { skill: new Map(), command: new Map(), subagent: new Map() },
+    global: emptyKindMaps(),
     perProject: new Map(),
   };
   let topEnts: { name: string; isDirectory(): boolean }[] = [];
@@ -276,11 +287,11 @@ async function buildUsage(): Promise<UsageMaps> {
   } catch { return usage; }
 
   const now = NOW_SEC();
-  const bumpInto = (kind: "skill" | "command" | "subagent", name: string, project: string, ts: number) => {
+  const bumpInto = (kind: UsageKind, name: string, project: string, ts: number) => {
     const g = usage.global[kind];
     if (!g.has(name)) g.set(name, emptyBuckets());
     bump(g.get(name)!, ts, now);
-    if (!usage.perProject.has(project)) usage.perProject.set(project, { skill: new Map(), command: new Map(), subagent: new Map() });
+    if (!usage.perProject.has(project)) usage.perProject.set(project, emptyKindMaps());
     const pm = usage.perProject.get(project)![kind];
     if (!pm.has(name)) pm.set(name, emptyBuckets());
     bump(pm.get(name)!, ts, now);
@@ -369,14 +380,32 @@ async function enabledPluginsAt(scopeKey: string): Promise<Set<string>> {
 
 // ---------- usage lookup helper ----------
 
+// Reproduce Claude Code's MCP tool-name sanitization: a server reachable as
+// mcp__<key>__<tool>. claude.ai remotes carry an implicit "claude.ai " prefix
+// (stripped from the stored name); plugin servers are namespaced plugin_<plugin>_<server>.
+const sanitizeMcp = (s: string): string => s.replace(/[^A-Za-z0-9_]/g, "_");
+function mcpServerKey(name: string, location: Location, pluginName?: string): string {
+  if (location === "claude-ai-remote") return sanitizeMcp(`claude.ai ${name}`);
+  if (location === "user-plugin" || location === "scoped-plugin") return sanitizeMcp(`plugin_${pluginName}_${name}`);
+  return sanitizeMcp(name);
+}
+
 function lookupUsage(
   name: string,
   kind: Kind,
   pluginName: string | undefined,
   projectPath: string | undefined,
   usage: UsageMaps,
+  location?: Location,
 ): UsageBuckets {
-  if (kind === "mcp" || kind === "hook") return emptyBuckets();
+  if (kind === "hook") return emptyBuckets();
+  if (kind === "mcp") {
+    const key = mcpServerKey(name, location!, pluginName);
+    // claude.ai remotes / user-scope servers fire from any cwd → global tally;
+    // project-scoped servers are attributed to their project's transcripts.
+    const src = projectPath ? usage.perProject.get(projectPath)?.mcp : usage.global.mcp;
+    return src?.get(key) ?? emptyBuckets();
+  }
   const kindPool: ("skill" | "command" | "subagent")[] = kind === "subagent" ? ["subagent"] : ["skill", "command"];
   const keys = pluginName ? [`${pluginName}:${name}`, name] : [name];
   let merged = emptyBuckets();
@@ -621,7 +650,7 @@ export async function collect(): Promise<CollectResult> {
     pluginScope?: "user" | "project"; pluginStatus?: any; pluginStatusNote?: string;
     transport?: string; url?: string;
   }): Item => {
-    const usageBuckets = lookupUsage(rec.name, rec.kind, rec.pluginName, rec.projectPath, usage);
+    const usageBuckets = lookupUsage(rec.name, rec.kind, rec.pluginName, rec.projectPath, usage, rec.location);
     return {
       kind: rec.kind,
       name: rec.name,
@@ -744,7 +773,7 @@ export async function collect(): Promise<CollectResult> {
     const projectMcps = projectMcpsByPath.get(p) ?? [];
     let activity = emptyBuckets();
     const pm = usage.perProject.get(p);
-    if (pm) for (const k of ["skill", "command", "subagent"] as const) for (const b of pm[k].values()) activity = mergeBuckets(activity, b);
+    if (pm) for (const k of ["skill", "command", "subagent", "mcp"] as const) for (const b of pm[k].values()) activity = mergeBuckets(activity, b);
     const dormant = activity.total === 0 && localItems.length === 0 && scopedPlugins.length === 0 && projectMcps.length === 0;
     if (dormant) dormantProjects++;
     projects.push({
@@ -817,7 +846,7 @@ export async function collect(): Promise<CollectResult> {
   for (const it of allItems) uniqueByKind[it.kind].add(it.name.toLowerCase());
 
   let inv7 = 0, inv30 = 0;
-  for (const m of [usage.global.skill, usage.global.command, usage.global.subagent]) {
+  for (const m of [usage.global.skill, usage.global.command, usage.global.subagent, usage.global.mcp]) {
     for (const b of m.values()) { inv7 += b.d7; inv30 += b.d30; }
   }
 

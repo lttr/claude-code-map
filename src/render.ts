@@ -23,7 +23,7 @@ function chip(item: Item): string {
   const u = item.usage;
   const lastTxt = u.last ? new Date(u.last * 1000).toISOString().slice(0, 10) : "never";
   const title = item.kind === "mcp"
-    ? `${item.name} — ${item.transport ?? "?"}${item.url ? ` (${item.url})` : ""}${item.projectPath ? ` @ ${home(item.projectPath)}` : ""}`
+    ? `${item.name} — ${item.transport ?? "?"}${item.url ? ` (${item.url})` : ""}${item.projectPath ? ` @ ${home(item.projectPath)}` : ""}\n7d: ${u.d7}  30d: ${u.d30}  90d: ${u.d90}\ntotal: ${u.total}  last: ${lastTxt}`
     : `${item.name}\n7d: ${u.d7}  30d: ${u.d30}  90d: ${u.d90}\ntotal: ${u.total}  last: ${lastTxt}`;
   const ext = item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
   return `<span class="${cls.join(" ")}" title="${esc(title)}">${esc(item.name)}${ext}</span>`;
