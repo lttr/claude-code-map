@@ -234,7 +234,7 @@ function ledgerPlate(result: CollectResult): string {
   const groups = contestedGroups(all);
   const cShown = groups.slice(0, 10);
   const cRows = cShown
-    .map((g) => `<li><span class="lf-k k-${g.kind}">${esc(g.name)}</span><span class="lf-origins">${esc(g.origins.join("  ·  "))}</span></li>`)
+    .map((g) => `<li class="lf-clash"><span class="lf-k k-${g.kind}">${esc(g.name)}</span><span class="lf-origins">${g.origins.map((o) => `<span class="lf-origin">${esc(o)}</span>`).join("")}</span></li>`)
     .join("");
   const cMore = groups.length > cShown.length
     ? `<div class="lf-more">+ ${groups.length - cShown.length} more contested name${groups.length - cShown.length === 1 ? "" : "s"}</div>`
@@ -260,21 +260,43 @@ function ledgerPlate(result: CollectResult): string {
         <div class="lf-head"><span class="lf-num">${deadCount}</span><span class="lf-cap">never invoked · of ${totalCount}</span></div>
         <p class="lf-note">Installed items with zero recorded use, by source. Prune candidates — a source showing <code>n/n</code> is entirely cold.</p>
         <ul class="lf-list">${deadRows}</ul>${deadMore}
+        <details class="lf-how">
+          <summary>How to prune</summary>
+          <ul>
+            <li><strong>Plugin sources</strong> (<code>plugin · name</code>) — open the <code>/plugin</code> manager to disable or uninstall, or drop its marketplace from <code>~/.claude/settings.json</code>. One removal clears the whole <code>n/n</code> block.</li>
+            <li><strong>Global</strong> — delete the folder: <code>~/.claude/skills/&lt;name&gt;/</code> (skill) or the file <code>~/.claude/commands/&lt;name&gt;.md</code> (command).</li>
+            <li><strong>Project paths</strong> — same items under that repo's <code>.claude/</code>.</li>
+          </ul>
+          <p class="lf-warn">Never-invoked ≠ useless. A freshly installed tool and a rare-but-critical one look identical here. Open each chip on the map and check its <code>last</code> date before deleting.</p>
+        </details>
       </div>
       <div class="ledger-find">
         <div class="lf-head"><span class="lf-num">${share}%</span><span class="lf-cap">from the top ${top.length}</span></div>
         <p class="lf-note">Concentration of all ${totalInv} recorded invocations. A small active core carries the setup.</p>
         <ul class="lf-list">${topRows}</ul>
+        <p class="lf-hint">These are the workhorses — protect them. Everything <em>outside</em> this core is fair game for the dead-weight panel.</p>
       </div>
       <div class="ledger-find">
         <div class="lf-head"><span class="lf-num">${result.tally.contested}</span><span class="lf-cap">contested names</span></div>
         <p class="lf-note">A name resolving to 2+ implementations — resolution is ambiguous. Dedupe to control which one wins.</p>
         <ul class="lf-list">${cRows || `<li class="muted">— none</li>`}</ul>${cMore}
+        <details class="lf-how">
+          <summary>How to resolve</summary>
+          <p>Rename or remove one of the listed origins so the token resolves to a single item. More-local scope generally wins (project &gt; user &gt; plugin), but confirm which actually fires before relying on it — invoke it once and check the map's heat.</p>
+        </details>
       </div>
       <div class="ledger-find">
         <div class="lf-head"><span class="lf-num">${result.dormantProjects + result.droppedProjects + archived.length}</span><span class="lf-cap">attrition &amp; cruft</span></div>
         <p class="lf-note">Stale wiring: projects with no activity, vanished directories, plugins from archived marketplaces.</p>
         <ul class="lf-list">${cruftRows}</ul>${archNote}
+        <details class="lf-how">
+          <summary>How to clear</summary>
+          <ul>
+            <li><strong>Archived plugins</strong> — the upstream marketplace is archived; remove it through the <code>/plugin</code> manager.</li>
+            <li><strong>Dormant projects</strong> — just directories with past usage and no Claude config. Nothing to clean unless you delete the repo itself.</li>
+            <li><strong>Missing dirs</strong> — already auto-dropped from the atlas; no action needed.</li>
+          </ul>
+        </details>
       </div>
     </div>
   </section>`;
