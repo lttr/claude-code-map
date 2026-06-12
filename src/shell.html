@@ -66,5 +66,85 @@
   })();
 </script>
 
+<script>
+  // Chip detail popover: click (or Enter/Space) a chip to open a readable card
+  // with its usage and declared references; reference names are buttons that
+  // scroll to and flash the matching chip(s). Delegated, so it covers chips
+  // injected by the runtime fetch above as well as the inlined --out build.
+  (function () {
+    var pop = null, anchor = null;
+
+    function close() {
+      if (pop) { pop.remove(); pop = null; }
+      if (anchor) { anchor.classList.remove("sel"); anchor = null; }
+    }
+
+    function flash(name) {
+      var hits = Array.prototype.filter.call(
+        document.querySelectorAll(".chip"),
+        function (c) { return c.dataset.name === name; }
+      );
+      if (!hits.length) return;
+      hits[0].scrollIntoView({ behavior: "smooth", block: "center" });
+      hits.forEach(function (c) {
+        c.classList.add("flash");
+        setTimeout(function () { c.classList.remove("flash"); }, 1500);
+      });
+    }
+
+    function linkRow(label, csv) {
+      var names = (csv || "").split(",").filter(Boolean);
+      if (!names.length) return "";
+      var links = names.map(function (n) {
+        return '<button type="button" class="pop-link" data-target="' + n + '">' + n + "</button>";
+      }).join("");
+      return '<div class="pop-sec"><span class="pop-lbl">' + label + '</span><span class="pop-links">' + links + "</span></div>";
+    }
+
+    function open(chip) {
+      close();
+      var d = chip.dataset;
+      pop = document.createElement("div");
+      pop.className = "chip-pop";
+      var linkable = d.kind === "skill" || d.kind === "command";
+      pop.innerHTML =
+        '<div class="pop-head"><span class="pop-name k-' + d.kind + '">' + (d.label || "") + "</span>" +
+          '<span class="pop-kind">' + d.kind + (d.contested ? " · contested" : "") + (d.loc ? " · " + d.loc : "") + "</span></div>" +
+        (d.extra ? '<div class="pop-meta">' + d.extra + "</div>" : "") +
+        (d.usage ? '<div class="pop-meta">' + d.usage + "</div>" : "") +
+        linkRow("depends on", d.out) + linkRow("used by", d.in) +
+        (linkable && !d.out && !d.in ? '<div class="pop-none">no declared references</div>' : "");
+      document.body.appendChild(pop);
+
+      var r = chip.getBoundingClientRect();
+      var top = window.scrollY + r.bottom + 6;
+      var left = window.scrollX + r.left;
+      var maxLeft = window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 12;
+      if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
+      pop.style.top = top + "px";
+      pop.style.left = left + "px";
+
+      anchor = chip;
+      chip.classList.add("sel");
+    }
+
+    document.addEventListener("click", function (e) {
+      var link = e.target.closest(".pop-link");
+      if (link) { flash(link.dataset.target); return; }
+      var chip = e.target.closest(".chip");
+      if (chip) { e.preventDefault(); open(chip); return; }
+      if (pop && !e.target.closest(".chip-pop")) close();
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { close(); return; }
+      if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("chip")) {
+        e.preventDefault();
+        open(e.target);
+      }
+    });
+  })();
+</script>
+
 </body>
 </html>

@@ -67,6 +67,10 @@ export interface Item {
   usage: UsageBuckets;
   recency: Recency;
   contested: boolean;
+  // Declared references (static body scrape): names this item points to, and
+  // names that point back at it. Skills/commands only; empty otherwise.
+  refsOut?: string[];
+  refsIn?: string[];
 }
 
 export interface PluginInfo {
@@ -107,7 +111,17 @@ export interface CollectResult {
     contested: number;
     dormant: number;
   };
+  relations: Relation[];
   generatedAt: number;
+}
+
+// A declared reference from one skill/command to another, scraped from body text
+// (slash or backticked mentions that resolve to a known item name). Static only.
+export interface Relation {
+  from: string;
+  fromKind: Kind;
+  fromLocation: Location;
+  refs: { name: string; kind: Kind; ambiguous: boolean }[];
 }
 
 // ---------- helpers ----------
@@ -613,6 +627,45 @@ async function readHooksFromPlugin(installPath: string): Promise<RawHook[]> {
   return extractHooks(d);
 }
 
+// ---------- declared relations (static body scrape) ----------
+
+// Resolve a skill/command item back to its source markdown:
+//   skill   → <base>/skills/<name>/SKILL.md
+//   command → <base>/commands/<name>.md   (":" namespacing maps to a subdir)
+// base is the global ~/.claude, a plugin install path, or a project's .claude.
+function bodyPathFor(it: Item): string | undefined {
+  let base: string;
+  if (it.location === "global") base = CLAUDE;
+  else if (it.location === "user-plugin" || it.location === "scoped-plugin") {
+    if (!it.pluginInstallPath) return undefined;
+    base = it.pluginInstallPath;
+  } else if (it.location === "local") {
+    if (!it.projectPath) return undefined;
+    base = join(it.projectPath, ".claude");
+  } else return undefined;
+  if (it.kind === "skill") return join(base, "skills", it.name, "SKILL.md");
+  if (it.kind === "command") return join(base, "commands", it.name.replace(/:/g, "/") + ".md");
+  return undefined;
+}
+
+// Mentions count only as /slug or backticked `slug` / `/slug`. The known-name
+// filter (applied by the caller) is the real precision guard — it drops prose
+// noise like `pwd`, `text`, /tmp, and doc URLs, keeping only real item names.
+const reRefSlash = /\/([a-z][a-z0-9:_-]*)/gi;
+const reRefTick = /`\/?([a-z][a-z0-9:_-]*)`/gi;
+function extractRefs(body: string, known: Set<string>, self: string): string[] {
+  const found = new Set<string>();
+  for (const re of [reRefSlash, reRefTick]) {
+    re.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(body))) {
+      const n = m[1].toLowerCase();
+      if (n !== self && known.has(n)) found.add(n);
+    }
+  }
+  return [...found].sort();
+}
+
 // ---------- main collect ----------
 
 export async function collect(): Promise<CollectResult> {
@@ -841,6 +894,55 @@ export async function collect(): Promise<CollectResult> {
     }
   }
 
+  // Declared relations: scrape each skill/command body for /slug and `slug`
+  // mentions that resolve to a known skill/command name. Targets that resolve to
+  // a contested name are flagged ambiguous (the edge can't pick one origin).
+  const linkable = allItems.filter((it) => it.kind === "skill" || it.kind === "command");
+  const knownNames = new Set(linkable.map((it) => it.name.toLowerCase()));
+  const ambiguousNames = new Set(linkable.filter((it) => it.contested).map((it) => it.name.toLowerCase()));
+  // A target name's kind. When a name resolves to both a skill and a command it is
+  // already contested (ambiguous) — pick one kind for colour, the "?" marks the doubt.
+  const nameKind = new Map<string, Kind>();
+  for (const it of linkable) if (!nameKind.has(it.name.toLowerCase())) nameKind.set(it.name.toLowerCase(), it.kind);
+  const relations: Relation[] = [];
+  for (const it of linkable) {
+    const path = bodyPathFor(it);
+    if (!path) continue;
+    const body = await readFile(path, "utf8").catch(() => "");
+    if (!body) continue;
+    const refs = extractRefs(body, knownNames, it.name.toLowerCase());
+    if (!refs.length) continue;
+    relations.push({
+      from: it.name,
+      fromKind: it.kind,
+      fromLocation: it.location,
+      refs: refs.map((name) => ({ name, kind: nameKind.get(name) ?? "skill", ambiguous: ambiguousNames.has(name) })),
+    });
+  }
+  relations.sort((a, b) => a.from.localeCompare(b.from) || a.fromLocation.localeCompare(b.fromLocation));
+
+  // Annotate items (by name) with their outgoing/incoming refs so each chip can
+  // show it participates in the graph. allItems holds the live Item objects, so
+  // this also reaches globalItems / plugin / project copies.
+  const outByName = new Map<string, Set<string>>();
+  const inByName = new Map<string, Set<string>>();
+  for (const rel of relations) {
+    const from = rel.from.toLowerCase();
+    if (!outByName.has(from)) outByName.set(from, new Set());
+    for (const ref of rel.refs) {
+      outByName.get(from)!.add(ref.name);
+      if (!inByName.has(ref.name)) inByName.set(ref.name, new Set());
+      inByName.get(ref.name)!.add(from);
+    }
+  }
+  for (const it of linkable) {
+    const key = it.name.toLowerCase();
+    const out = outByName.get(key);
+    const inn = inByName.get(key);
+    if (out?.size) it.refsOut = [...out].sort();
+    if (inn?.size) it.refsIn = [...inn].sort();
+  }
+
   // Tally counts: unique items per kind across all locations
   const uniqueByKind: Record<Kind, Set<string>> = { mcp: new Set(), skill: new Set(), command: new Set(), subagent: new Set(), hook: new Set() };
   for (const it of allItems) uniqueByKind[it.kind].add(it.name.toLowerCase());
@@ -875,6 +977,7 @@ export async function collect(): Promise<CollectResult> {
       contested: contestedNames,
       dormant: dormantProjects,
     },
+    relations,
     generatedAt: Date.now(),
   };
 }

@@ -32,22 +32,35 @@ function chipAria(item: Item): string {
   parts.push(`${u.total} invocation${u.total === 1 ? "" : "s"} total`);
   parts.push(`last used ${last}`);
   parts.push(`${u.d7} in 7 days, ${u.d30} in 30 days`);
+  if (item.refsOut?.length) parts.push(`depends on ${item.refsOut.join(", ")}`);
+  if (item.refsIn?.length) parts.push(`used by ${item.refsIn.join(", ")}`);
   return parts.join(", ");
 }
 
 function chip(item: Item): string {
   const cls = [`chip`, `k-${item.kind}`, `r-${item.recency}`];
   if (item.contested) cls.push("contested");
+  const out = item.refsOut ?? [], inn = item.refsIn ?? [];
+  if (out.length || inn.length) cls.push("has-rel");
   const u = item.usage;
   const lastTxt = u.last ? new Date(u.last * 1000).toISOString().slice(0, 10) : "never";
-  const usageLines = `7d: ${u.d7}  30d: ${u.d30}  90d: ${u.d90}\ntotal: ${u.total}  last: ${lastTxt}`;
-  // Hooks are passive (no usage), so they carry no tooltip.
-  const title = item.kind === "mcp"
-    ? `${item.name} — ${item.transport ?? "?"}${item.url ? ` (${item.url})` : ""}${item.projectPath ? ` @ ${home(item.projectPath)}` : ""}\n${usageLines}`
-    : `${item.name}\n${usageLines}`;
-  const titleAttr = item.kind === "hook" ? "" : ` title="${esc(title)}"`;
+  // Detail shown in the click popover, carried as data-* (no clunky native title).
+  const usageLine = item.kind === "hook" ? "" : `7d ${u.d7} · 30d ${u.d30} · 90d ${u.d90} · total ${u.total} · last ${lastTxt}`;
+  const extra = item.kind === "hook"
+    ? "passive — fires on this event, not invocation-counted"
+    : item.kind === "mcp"
+    ? `${item.transport ?? "?"}${item.url ? ` · ${item.url}` : ""}${item.projectPath ? ` · @ ${home(item.projectPath)}` : ""}`
+    : "";
+  const data =
+    ` data-name="${esc(item.name.toLowerCase())}" data-label="${esc(item.name)}" data-kind="${item.kind}"` +
+    ` data-loc="${esc(item.location)}"${usageLine ? ` data-usage="${esc(usageLine)}"` : ""}${extra ? ` data-extra="${esc(extra)}"` : ""}` +
+    `${out.length ? ` data-out="${esc(out.join(","))}"` : ""}${inn.length ? ` data-in="${esc(inn.join(","))}"` : ""}${item.contested ? ` data-contested="1"` : ""}`;
   const ext = item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
-  return `<span class="${cls.join(" ")}"${titleAttr} aria-label="${esc(chipAria(item))}">${esc(item.name)}${ext}</span>`;
+  // Route marker, revealed only in relations mode: →n outgoing, ←n incoming.
+  const mark = (out.length || inn.length)
+    ? `<span class="rel-mark" aria-hidden="true">${out.length ? `→${out.length}` : ""}${out.length && inn.length ? " " : ""}${inn.length ? `←${inn.length}` : ""}</span>`
+    : "";
+  return `<span class="${cls.join(" ")}"${data} role="button" tabindex="0" aria-label="${esc(chipAria(item))}">${esc(item.name)}${ext}${mark}</span>`;
 }
 
 function chipsOf(items: Item[]): string {
@@ -132,8 +145,32 @@ function compassPlate(): string {
       <div class="leg-row"><span class="chip k-skill r-stale">stale</span> older</div>
       <div class="leg-row"><span class="chip k-skill r-none">none</span> never invoked</div>
       <div class="leg-row"><span class="chip k-hook">hook</span> passive · not counted</div>
+      <p class="leg-head">Marks</p>
+      <div class="leg-row"><span class="chip k-skill r-warm contested">name</span> contested · 2+ items share this name</div>
     </div>
   </div>`;
+}
+
+function relationsPlate(result: CollectResult): string {
+  const rels = result.relations;
+  const rows = rels.map((r) => {
+    const refs = r.refs.map((ref) =>
+      `<span class="rel-to k-${ref.kind}${ref.ambiguous ? " amb" : ""}"${ref.ambiguous ? ` title="contested name — resolves to 2+ items"` : ""}>${esc(ref.name)}${ref.ambiguous ? "<span class=\"q\">?</span>" : ""}</span>`,
+    ).join("");
+    return `<div class="rel-row">
+      <span class="rel-from k-${r.fromKind}">${esc(r.from)}</span>
+      <span class="rel-arrow">→</span>
+      <span class="rel-refs">${refs}</span>
+    </div>`;
+  }).join("");
+  return `
+  <section class="plate relations-plate">
+    <h2 class="plate-title">Relations <span class="sub">· declared references</span>
+      <label class="rel-knob"><input type="checkbox" id="rel-toggle"><span class="rel-knob-track"></span><span class="rel-knob-label">show routes</span></label>
+    </h2>
+    <p class="plate-note">Static scrape of skill &amp; command bodies for <code>/slug</code> and <code>\`slug\`</code> mentions that resolve to a known item. ${rels.length} edge${rels.length === 1 ? "" : "s"}; usage not consulted. Both ends are tinted by kind (<span class="amb-key" style="color:var(--hue-skill)">skill</span> · <span class="amb-key" style="color:var(--hue-command)">command</span>, see compass). <span class="amb-key amb">name?</span> = contested target.</p>
+    <div class="rel-body">${rels.length ? rows : `<div class="muted">— no declared references found</div>`}</div>
+  </section>`;
 }
 
 function gazetteer(result: CollectResult): string {
@@ -224,6 +261,7 @@ ${tallyA}
 ${tallyB}
 ${compassPlate()}
 ${gazetteer(result)}
+${relationsPlate(result)}
 <section class="plate">
   <h2 class="plate-title">Regions <span class="sub">· ${result.regions.length} province${result.regions.length === 1 ? "" : "s"}</span></h2>
   <p class="plate-note">Projects grouped by parent directory, sorted by aggregate activity. ${result.droppedProjects} missing dir${result.droppedProjects === 1 ? "" : "s"} dropped; ${result.dormantProjects} dormant project${result.dormantProjects === 1 ? "" : "s"} hidden.</p>
