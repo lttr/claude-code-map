@@ -209,6 +209,25 @@ h1.title em { font-style: italic; color: var(--accent); }
 .chip.r-stale { background: color-mix(in srgb, currentColor 3%,  var(--paper)); opacity: .85; }
 .chip.r-none  { background: transparent; border-style: dashed; opacity: .65; }
 
+/* Hooks are passive: they fire on events, not by invocation, so usage can't be
+   measured. They always land in r-none — but the dashed "never used" look would
+   misread them as dead code. Override with a neutral diagonal hatch: solid-bordered,
+   full opacity, distinct from both the recency ink-density scale (used) and the
+   dashed faded chip (genuinely unused). */
+.chip.k-hook,
+.chip.k-hook.r-none {
+  opacity: 1;
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--hue-hook) 45%, var(--rule));
+  background-color: color-mix(in srgb, var(--hue-hook) 5%, var(--paper));
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--hue-hook) 16%, transparent) 0,
+    color-mix(in srgb, var(--hue-hook) 16%, transparent) 1px,
+    transparent 1px, transparent 5px
+  );
+}
+
 .chip.contested::after {
   content: "✦"; color: var(--accent); margin-left: 2px;
   font-family: "IM Fell English", serif; font-size: 13px; vertical-align: super;

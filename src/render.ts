@@ -22,11 +22,14 @@ function chip(item: Item): string {
   if (item.contested) cls.push("contested");
   const u = item.usage;
   const lastTxt = u.last ? new Date(u.last * 1000).toISOString().slice(0, 10) : "never";
+  const usageLines = `7d: ${u.d7}  30d: ${u.d30}  90d: ${u.d90}\ntotal: ${u.total}  last: ${lastTxt}`;
+  // Hooks are passive (no usage), so they carry no tooltip.
   const title = item.kind === "mcp"
-    ? `${item.name} — ${item.transport ?? "?"}${item.url ? ` (${item.url})` : ""}${item.projectPath ? ` @ ${home(item.projectPath)}` : ""}\n7d: ${u.d7}  30d: ${u.d30}  90d: ${u.d90}\ntotal: ${u.total}  last: ${lastTxt}`
-    : `${item.name}\n7d: ${u.d7}  30d: ${u.d30}  90d: ${u.d90}\ntotal: ${u.total}  last: ${lastTxt}`;
+    ? `${item.name} — ${item.transport ?? "?"}${item.url ? ` (${item.url})` : ""}${item.projectPath ? ` @ ${home(item.projectPath)}` : ""}\n${usageLines}`
+    : `${item.name}\n${usageLines}`;
+  const titleAttr = item.kind === "hook" ? "" : ` title="${esc(title)}"`;
   const ext = item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
-  return `<span class="${cls.join(" ")}" title="${esc(title)}">${esc(item.name)}${ext}</span>`;
+  return `<span class="${cls.join(" ")}"${titleAttr}>${esc(item.name)}${ext}</span>`;
 }
 
 function chipsOf(items: Item[]): string {
@@ -109,7 +112,8 @@ function compassPlate(): string {
       <div class="leg-row"><span class="chip k-skill r-warm">warm</span> ≤ 30 days</div>
       <div class="leg-row"><span class="chip k-skill r-cool">cool</span> ≤ 90 days</div>
       <div class="leg-row"><span class="chip k-skill r-stale">stale</span> older</div>
-      <div class="leg-row"><span class="chip k-skill r-none">none</span> never</div>
+      <div class="leg-row"><span class="chip k-skill r-none">none</span> never invoked</div>
+      <div class="leg-row"><span class="chip k-hook">hook</span> passive · not counted</div>
     </div>
   </div>`;
 }
