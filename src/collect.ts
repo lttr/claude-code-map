@@ -797,6 +797,10 @@ export async function collect(): Promise<CollectResult> {
   const localItemsByPath = new Map<string, Item[]>();
   for (const p of candidates) {
     const claudeDir = join(p, ".claude");
+    // The home dir can surface as a project (transcript cwd), but its .claude IS
+    // the global ~/.claude — scanning it re-emits every global item as "local",
+    // falsely contesting all of them. Skip it; global already covers this dir.
+    if (claudeDir === CLAUDE) continue;
     if (!(await pathExists(claudeDir))) continue;
     const items: Item[] = [];
     for (const name of await listDir(join(claudeDir, "skills")))      items.push(makeItem({ kind: "skill",    name, location: "local", projectPath: p }));
@@ -898,7 +902,25 @@ export async function collect(): Promise<CollectResult> {
   // mentions that resolve to a known skill/command name. Targets that resolve to
   // a contested name are flagged ambiguous (the edge can't pick one origin).
   const linkable = allItems.filter((it) => it.kind === "skill" || it.kind === "command");
-  const knownNames = new Set(linkable.map((it) => it.name.toLowerCase()));
+  // Resolution respects scope: an item only "sees" targets that are actually
+  // available where it runs. Global and user-plugin items are ambient (visible
+  // everywhere); local and scoped-plugin items are visible only within their own
+  // project. Without this a local /release in one repo wrongly links every other
+  // repo's mention of `release`.
+  const ambientNames = new Set<string>();
+  const localNamesByProject = new Map<string, Set<string>>();
+  for (const it of linkable) {
+    const n = it.name.toLowerCase();
+    if (it.location === "global" || it.location === "user-plugin") ambientNames.add(n);
+    else if ((it.location === "local" || it.location === "scoped-plugin") && it.projectPath) {
+      if (!localNamesByProject.has(it.projectPath)) localNamesByProject.set(it.projectPath, new Set());
+      localNamesByProject.get(it.projectPath)!.add(n);
+    }
+  }
+  function visibleNames(it: Item): Set<string> {
+    const local = it.projectPath ? localNamesByProject.get(it.projectPath) : undefined;
+    return local ? new Set([...ambientNames, ...local]) : ambientNames;
+  }
   const ambiguousNames = new Set(linkable.filter((it) => it.contested).map((it) => it.name.toLowerCase()));
   // A target name's kind. When a name resolves to both a skill and a command it is
   // already contested (ambiguous) — pick one kind for colour, the "?" marks the doubt.
@@ -910,7 +932,7 @@ export async function collect(): Promise<CollectResult> {
     if (!path) continue;
     const body = await readFile(path, "utf8").catch(() => "");
     if (!body) continue;
-    const refs = extractRefs(body, knownNames, it.name.toLowerCase());
+    const refs = extractRefs(body, visibleNames(it), it.name.toLowerCase());
     if (!refs.length) continue;
     relations.push({
       from: it.name,
