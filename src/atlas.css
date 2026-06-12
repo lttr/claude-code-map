@@ -4,7 +4,7 @@
   --paper-3:    #d9c79c;
   --ink:        #3a2a17;
   --ink-soft:   #5a4326;
-  --ink-faint:  #8a6e48;
+  --ink-faint:  #6b5732;
   --rule:       #7a5a33;
   --water-deep: #6b8286;
   --accent:     #a24a2a;
@@ -140,14 +140,14 @@ h1.title em { font-style: italic; color: var(--accent); }
   border: 1px solid var(--ink-faint); flex: 0 0 14px;
 }
 .compass-legend .leg-row .chip { margin-right: 4px; }
-.compass-legend h4 {
+.compass-legend .leg-head {
   margin: 0 0 2px; grid-column: 1 / -1;
   font-family: "IM Fell English SC", serif; letter-spacing: .2em;
   font-size: 13px; color: var(--ink-faint); text-transform: uppercase;
   border-bottom: 1px solid var(--rule); padding-bottom: 4px;
 }
-.compass-legend h4 + .leg-row { margin-top: 2px; }
-.compass-legend h4:not(:first-child) { margin-top: 14px; }
+.compass-legend .leg-head + .leg-row { margin-top: 2px; }
+.compass-legend .leg-head:not(:first-child) { margin-top: 14px; }
 
 /* Gazetteer (overview inventory + regional plates share chip styles) */
 .plate { margin: 48px 0 0; }

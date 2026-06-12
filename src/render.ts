@@ -17,6 +17,24 @@ const KIND_HUE: Record<Kind, string> = {
   hook: "var(--hue-hook)",
 };
 
+// Readable accessible name — the stats that sighted users get from the hover
+// tooltip, spelled out for screen readers (the `title` is not reliably announced
+// and is invisible to keyboard/touch).
+function chipAria(item: Item): string {
+  if (item.kind === "hook") {
+    return `${item.name}, hook — passive, fires on this event, not invocation-counted`;
+  }
+  const u = item.usage;
+  const last = u.last ? new Date(u.last * 1000).toISOString().slice(0, 10) : "never";
+  const parts = [`${item.name}, ${KIND_SINGULAR[item.kind]}`];
+  if (item.contested) parts.push("contested name");
+  if (item.kind === "mcp" && item.transport) parts.push(`${item.transport} transport`);
+  parts.push(`${u.total} invocation${u.total === 1 ? "" : "s"} total`);
+  parts.push(`last used ${last}`);
+  parts.push(`${u.d7} in 7 days, ${u.d30} in 30 days`);
+  return parts.join(", ");
+}
+
 function chip(item: Item): string {
   const cls = [`chip`, `k-${item.kind}`, `r-${item.recency}`];
   if (item.contested) cls.push("contested");
@@ -29,7 +47,7 @@ function chip(item: Item): string {
     : `${item.name}\n${usageLines}`;
   const titleAttr = item.kind === "hook" ? "" : ` title="${esc(title)}"`;
   const ext = item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
-  return `<span class="${cls.join(" ")}"${titleAttr}>${esc(item.name)}${ext}</span>`;
+  return `<span class="${cls.join(" ")}"${titleAttr} aria-label="${esc(chipAria(item))}">${esc(item.name)}${ext}</span>`;
 }
 
 function chipsOf(items: Item[]): string {
@@ -78,7 +96,7 @@ function compassPlate(): string {
   // Four-point rose, one symbol per kind; three nested location rings.
   return `
   <div class="compass-wrap">
-    <svg class="compass-svg" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">
+    <svg class="compass-svg" viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <circle r="100" fill="none" stroke="var(--rule)" stroke-opacity=".6"/>
       <circle r="74"  fill="none" stroke="var(--rule)" stroke-opacity=".45"/>
       <circle r="48"  fill="none" stroke="var(--rule)" stroke-opacity=".3"/>
@@ -101,13 +119,13 @@ function compassPlate(): string {
       <circle r="3" fill="var(--ink)"/>
     </svg>
     <div class="compass-legend">
-      <h4>Kinds</h4>
+      <p class="leg-head">Kinds</p>
       <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.skill}"></span>skill — iron-gall</div>
       <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.command}"></span>command — madder</div>
       <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.subagent}"></span>subagent — verdigris</div>
       <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.mcp}"></span>MCP — sepia</div>
       <div class="leg-row"><span class="swatch" style="background:${KIND_HUE.hook}"></span>hook — tyrian</div>
-      <h4>Ink density · recency</h4>
+      <p class="leg-head">Ink density · recency</p>
       <div class="leg-row"><span class="chip k-skill r-hot">hot</span> ≤ 7 days</div>
       <div class="leg-row"><span class="chip k-skill r-warm">warm</span> ≤ 30 days</div>
       <div class="leg-row"><span class="chip k-skill r-cool">cool</span> ≤ 90 days</div>
