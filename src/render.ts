@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
-import type { CollectResult, Item, Kind, PluginInfo, ProjectInfo } from "./collect.ts";
+import type { CollectResult, ContextKind, ContextSource, Item, Kind, PluginInfo, ProjectContext, ProjectInfo } from "./collect.ts";
+import { loadedContextLines } from "./collect.ts";
 
 const HOME = homedir();
 const home = (s: string) => (s.startsWith(HOME) ? "~" + s.slice(HOME.length) : s);
@@ -436,6 +437,55 @@ function gazetteer(result: CollectResult): string {
   </section>`;
 }
 
+// ---- Standing context: briefing stamp + baseline strip ----
+const CTX_LABEL: Record<ContextKind, string> = {
+  "claude-md": "CLAUDE.md",
+  "claude-local": "CLAUDE.local",
+  "rule": "rule",
+  "memory-index": "memory",
+};
+
+// Marginal standing context a card contributes, on top of the global baseline.
+// A muted marginalia stamp (not a kind hue — standing context is a separate axis
+// from servitors), collapsed by default, opening to each source.
+function briefingStamp(ctx: ProjectContext | undefined): string {
+  if (!ctx) return "";
+  const ticks = [
+    ctx.hasOverflow ? "overflow" : "",
+    ctx.hasOverCliff ? "long CLAUDE.md" : "",
+    ctx.onDemandRules ? `${ctx.onDemandRules} on-demand rule${ctx.onDemandRules === 1 ? "" : "s"}` : "",
+  ].filter(Boolean).map((t) => `<span class="briefing-tick">${esc(t)}</span>`).join("");
+  const rows = ctx.sources.map((s) => {
+    const load = s.loadMode === "on-demand" ? "on-demand"
+      : s.loadMode === "overflow-truncated" ? `${s.lines} ln · head only`
+      : `${s.lines} ln`;
+    const imp = s.importLines ? ` +${s.importLines} imported${s.importsDeep ? "…" : ""}` : "";
+    return `<div class="briefing-src"><span class="bs-kind">${esc(CTX_LABEL[s.kind])}</span>` +
+      `<span class="bs-scope">${esc(s.scope)}</span>` +
+      `<span class="bs-lines">${esc(load)}${esc(imp)}</span></div>`;
+  }).join("");
+  return `<details class="briefing"><summary class="briefing-stamp">` +
+    `<span class="orn" aria-hidden="true">❧</span> briefing ${ctx.alwaysLines} ln${ticks}</summary>` +
+    `<div class="briefing-list">${rows}</div></details>`;
+}
+
+// The global standing context every project loads, stated once so a card's stamp
+// reads as marginal on top of this.
+function baselineStrip(baseline: ContextSource[]): string {
+  if (!baseline.length) return "";
+  const load = (arr: ContextSource[]) => arr.reduce((n, s) => n + loadedContextLines(s), 0);
+  const userMd = baseline.filter((s) => s.scope === "user" && s.kind === "claude-md");
+  const userRules = baseline.filter((s) => s.scope === "user" && s.kind === "rule");
+  const managed = baseline.filter((s) => s.scope === "managed");
+  const parts: string[] = [];
+  if (userMd.length) parts.push(`user CLAUDE.md (${load(userMd)})`);
+  if (userRules.length) parts.push(`user rules (${load(userRules)} across ${userRules.length})`);
+  if (managed.length) parts.push(`managed policy (${load(managed)})`);
+  if (!parts.length) return "";
+  return `<div class="baseline-strip"><span class="orn" aria-hidden="true">❧</span> ` +
+    `Every project also loads <strong>${load(baseline)} ln</strong> of standing context — ${parts.join(" · ")}.</div>`;
+}
+
 function projectCard(proj: ProjectInfo): string {
   const local = proj.localItems;
   const localSk = local.filter((i) => i.kind === "skill");
@@ -445,13 +495,14 @@ function projectCard(proj: ProjectInfo): string {
   const a = proj.activity;
   const lastTxt = a.last ? new Date(a.last * 1000).toISOString().slice(0, 10) : "—";
   const summary = a.total ? `${a.total} invocations · last ${lastTxt}` : "no recorded usage";
-  const empty = !local.length && !proj.scopedPlugins.length && !proj.projectMcps.length;
+  const empty = !local.length && !proj.scopedPlugins.length && !proj.projectMcps.length && !proj.context;
   return `
   <div class="proj-card ${empty ? "empty" : ""}">
     <div class="proj-head">
       <span class="proj-path">${esc(home(proj.path))}</span>
       <span class="proj-activity" title="7d:${a.d7} 30d:${a.d30} 90d:${a.d90} total:${a.total}">${esc(summary)}</span>
       ${useBadge([...local, ...proj.projectMcps, ...proj.scopedPlugins.flatMap((sp) => sp.items)])}
+      ${briefingStamp(proj.context)}
     </div>
     ${kindSection("local skills", localSk, "skill")}
     ${kindSection("local commands", localCm, "command")}
@@ -490,6 +541,7 @@ export function renderAtlas(result: CollectResult): string {
   return `
 ${tallyA}
 ${tallyB}
+${baselineStrip(result.baseline)}
 ${compassPlate()}
 ${ledgerPlate(result)}
 ${gazetteer(result)}

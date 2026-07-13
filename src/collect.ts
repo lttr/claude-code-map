@@ -88,6 +88,42 @@ export interface PluginInfo {
   items: Item[];
 }
 
+// ---------- standing context (CLAUDE.md, rules, auto-memory) ----------
+// A second axis next to servitors: files loaded into context at session start
+// whether or not they are ever invoked. Line counts only (no tokens/sessions).
+// Ref: https://code.claude.com/docs/en/memory
+export type ContextKind = "claude-md" | "claude-local" | "rule" | "memory-index";
+export type LoadMode = "always" | "on-demand" | "overflow-truncated";
+
+export interface ContextSource {
+  kind: ContextKind;
+  scope: "managed" | "user" | "project" | "local";
+  path: string;
+  lines: number;              // whole-file line count
+  loadMode: LoadMode;
+  importCount?: number;        // count-and-flag: number of @path mentions
+  importLines?: number;        // best-effort ONE-level resolved lines (approximate)
+  importsDeep?: boolean;       // a resolved import itself has @path mentions (not followed)
+  overCliff?: boolean;         // CLAUDE.md over the ~200-line adherence cliff
+}
+
+export interface ProjectContext {
+  sources: ContextSource[];
+  alwaysLines: number;         // lines actually loaded every session (marginal)
+  onDemandRules: number;       // count of path-scoped rules
+  hasOverflow: boolean;        // any memory-index truncated
+  hasOverCliff: boolean;       // any CLAUDE.md over the cliff
+}
+
+// Lines a source actually contributes at launch: on-demand rules add nothing,
+// a truncated MEMORY.md contributes only its loaded head, everything else its
+// whole body — plus any one-level resolved imports.
+export function loadedContextLines(s: ContextSource): number {
+  if (s.loadMode === "on-demand") return s.importLines ?? 0;
+  const body = s.kind === "memory-index" ? Math.min(s.lines, MEMORY_HEAD_LINES) : s.lines;
+  return body + (s.importLines ?? 0);
+}
+
 export interface ProjectInfo {
   path: string;
   inHistory: boolean;
@@ -96,6 +132,7 @@ export interface ProjectInfo {
   projectMcps: Item[];
   activity: UsageBuckets;
   dormant: boolean;
+  context?: ProjectContext;
 }
 
 export interface CollectResult {
@@ -103,6 +140,7 @@ export interface CollectResult {
   userPlugins: PluginInfo[];
   userMcps: Item[];
   regions: { label: string; projects: ProjectInfo[]; activity: UsageBuckets }[];
+  baseline: ContextSource[]; // global standing context loaded in every project
   droppedProjects: number;
   dormantProjects: number;
   contestedNames: number;
@@ -668,6 +706,164 @@ function extractRefs(body: string, known: Set<string>, self: string): string[] {
   return [...found].sort();
 }
 
+// ---------- standing-context scanning ----------
+// CLAUDE.md over this many lines gets an adherence warning (per the memory docs).
+const CLIFF = 200;
+// MEMORY.md is loaded head-first; past either threshold the tail is silently
+// dropped, so only the head counts toward what actually loads.
+const MEMORY_HEAD_LINES = 200;
+const MEMORY_HEAD_BYTES = 25 * 1024;
+
+function lineCount(txt: string): number {
+  if (!txt) return 0;
+  const n = txt.split("\n").length;
+  return txt.endsWith("\n") ? n - 1 : n;
+}
+
+// Blank out fenced blocks and inline code spans so an @path inside an example
+// (` `@foo` `) is not mistaken for a real import.
+function stripCode(txt: string): string {
+  return txt
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/~~~[\s\S]*?~~~/g, "")
+    .replace(/`[^`\n]*`/g, "");
+}
+
+// A rule is path-scoped (on-demand) when its YAML frontmatter carries a `paths:` key.
+function hasPathsFrontmatter(txt: string): boolean {
+  const m = txt.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  return !!m && /^\s*paths\s*:/m.test(m[1]);
+}
+
+// Only tokens that look like file paths count as imports — filters handles and
+// prose noise from real @path/to/file mentions. Approximate, by design.
+function looksLikeImport(s: string): boolean {
+  return s.startsWith("~/") || s.startsWith("./") || s.startsWith("../")
+    || s.startsWith("/") || s.includes("/") || /\.(md|markdown|txt)$/i.test(s);
+}
+
+function importSpecs(txt: string): string[] {
+  const stripped = stripCode(txt);
+  const re = /(?:^|\s)@([^\s]+)/g;
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(stripped))) {
+    const s = m[1].replace(/[.,;:)\]]+$/, "");
+    if (looksLikeImport(s)) out.push(s);
+  }
+  return out;
+}
+
+function resolveImport(spec: string, fromFile: string): string {
+  if (spec.startsWith("~/")) return join(HOME, spec.slice(2));
+  if (spec.startsWith("/")) return spec;
+  return join(dirname(fromFile), spec);
+}
+
+// Count-and-flag imports: how many @path mentions, one-level resolved line total,
+// and whether any resolved file itself imports further (undercount flag).
+async function scanImports(txt: string, fromFile: string): Promise<Pick<ContextSource, "importCount" | "importLines" | "importsDeep">> {
+  const specs = importSpecs(txt);
+  if (!specs.length) return {};
+  let importLines = 0;
+  let importsDeep = false;
+  for (const spec of specs) {
+    const body = await readFile(resolveImport(spec, fromFile), "utf8").catch(() => undefined);
+    if (body === undefined) continue;
+    importLines += lineCount(body);
+    if (importSpecs(body).length) importsDeep = true;
+  }
+  return { importCount: specs.length, importLines: importLines || undefined, importsDeep: importsDeep || undefined };
+}
+
+async function walkMd(dir: string): Promise<string[]> {
+  const out: string[] = [];
+  let ents;
+  try { ents = await readdir(dir, { withFileTypes: true }); } catch { return out; }
+  for (const e of ents) {
+    const full = join(dir, e.name);
+    if (e.isDirectory()) out.push(...await walkMd(full));
+    else if (e.isFile() && e.name.endsWith(".md")) out.push(full);
+  }
+  return out.sort();
+}
+
+async function claudeMdSource(
+  path: string,
+  kind: "claude-md" | "claude-local",
+  scope: ContextSource["scope"],
+): Promise<ContextSource | undefined> {
+  const txt = await readFile(path, "utf8").catch(() => undefined);
+  if (txt === undefined) return undefined;
+  const lines = lineCount(txt);
+  return {
+    kind, scope, path, lines,
+    loadMode: "always",
+    overCliff: kind === "claude-md" && lines > CLIFF ? true : undefined,
+    ...(await scanImports(txt, path)),
+  };
+}
+
+async function ruleSources(dir: string, scope: ContextSource["scope"]): Promise<ContextSource[]> {
+  const out: ContextSource[] = [];
+  for (const path of await walkMd(dir)) {
+    const txt = await readFile(path, "utf8").catch(() => undefined);
+    if (txt === undefined) continue;
+    out.push({
+      kind: "rule", scope, path, lines: lineCount(txt),
+      loadMode: hasPathsFrontmatter(txt) ? "on-demand" : "always",
+      ...(await scanImports(txt, path)),
+    });
+  }
+  return out;
+}
+
+async function memorySource(folder: string | undefined): Promise<ContextSource | undefined> {
+  if (!folder) return undefined;
+  const path = join(CLAUDE, "projects", folder, "memory", "MEMORY.md");
+  const txt = await readFile(path, "utf8").catch(() => undefined);
+  if (txt === undefined) return undefined;
+  const lines = lineCount(txt);
+  const overflow = lines > MEMORY_HEAD_LINES || Buffer.byteLength(txt, "utf8") > MEMORY_HEAD_BYTES;
+  return { kind: "memory-index", scope: "project", path, lines, loadMode: overflow ? "overflow-truncated" : "always" };
+}
+
+function summariseContext(sources: ContextSource[]): ProjectContext {
+  return {
+    sources,
+    alwaysLines: sources.reduce((n, s) => n + loadedContextLines(s), 0),
+    onDemandRules: sources.filter((s) => s.loadMode === "on-demand").length,
+    hasOverflow: sources.some((s) => s.loadMode === "overflow-truncated"),
+    hasOverCliff: sources.some((s) => s.overCliff),
+  };
+}
+
+// A project's own standing context (marginal, on top of the baseline).
+async function scanContext(projectPath: string, folder: string | undefined): Promise<ProjectContext | undefined> {
+  const sources: ContextSource[] = [];
+  const md1 = await claudeMdSource(join(projectPath, "CLAUDE.md"), "claude-md", "project");
+  if (md1) sources.push(md1);
+  const md2 = await claudeMdSource(join(projectPath, ".claude", "CLAUDE.md"), "claude-md", "project");
+  if (md2) sources.push(md2);
+  const local = await claudeMdSource(join(projectPath, "CLAUDE.local.md"), "claude-local", "local");
+  if (local) sources.push(local);
+  sources.push(...await ruleSources(join(projectPath, ".claude", "rules"), "project"));
+  const mem = await memorySource(folder);
+  if (mem) sources.push(mem);
+  return sources.length ? summariseContext(sources) : undefined;
+}
+
+// Global standing context loaded in every project, scanned once.
+async function scanBaseline(): Promise<ContextSource[]> {
+  const out: ContextSource[] = [];
+  const userMd = await claudeMdSource(join(CLAUDE, "CLAUDE.md"), "claude-md", "user");
+  if (userMd) out.push(userMd);
+  out.push(...await ruleSources(join(CLAUDE, "rules"), "user"));
+  const managed = await claudeMdSource("/etc/claude-code/CLAUDE.md", "claude-md", "managed");
+  if (managed) out.push(managed);
+  return out;
+}
+
 // ---------- main collect ----------
 
 export async function collect(): Promise<CollectResult> {
@@ -825,6 +1021,10 @@ export async function collect(): Promise<CollectResult> {
     scopedByPath.get(info.projectPath)!.push(info);
   }
 
+  // Reverse the folder→cwd map so each project can find its auto-memory slug.
+  const cwdToFolder = new Map<string, string>();
+  for (const [folder, cwd] of folderToCwdCache) cwdToFolder.set(cwd, folder);
+
   for (const p of candidates) {
     if (!(await pathExists(p))) { droppedProjects++; continue; }
     const localItems = localItemsByPath.get(p) ?? [];
@@ -833,7 +1033,10 @@ export async function collect(): Promise<CollectResult> {
     let activity = emptyBuckets();
     const pm = usage.perProject.get(p);
     if (pm) for (const k of ["skill", "command", "subagent", "mcp"] as const) for (const b of pm[k].values()) activity = mergeBuckets(activity, b);
-    const dormant = activity.total === 0 && localItems.length === 0 && scopedPlugins.length === 0 && projectMcps.length === 0;
+    const context = await scanContext(p, cwdToFolder.get(p));
+    // Standing context is its own reason to exist: a project that only loads a
+    // CLAUDE.md is not dormant, even with zero activity or servitors.
+    const dormant = activity.total === 0 && localItems.length === 0 && scopedPlugins.length === 0 && projectMcps.length === 0 && !context;
     if (dormant) dormantProjects++;
     projects.push({
       path: p,
@@ -843,6 +1046,7 @@ export async function collect(): Promise<CollectResult> {
       projectMcps,
       activity,
       dormant,
+      context,
     });
   }
 
@@ -1001,11 +1205,14 @@ export async function collect(): Promise<CollectResult> {
     .filter((p) => p.scope === "user")
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const baseline = await scanBaseline();
+
   return {
     globalItems,
     userPlugins,
     userMcps,
     regions,
+    baseline,
     droppedProjects,
     dormantProjects,
     contestedNames,
