@@ -79,7 +79,8 @@
     </p>
     <p class="astro-hint">
       Take a bearing with the <button type="button" id="astro-open">Astrolabe</button> —
-      press <kbd>Ctrl</kbd>+<kbd>K</kbd> to sight any servitor, project, or plate and sail to it.
+      press <kbd>Ctrl</kbd>+<kbd>K</kbd> to sight any servitor, project, or plate — one sheet of
+      this atlas — and sail the page to it.
     </p>
     <div class="rule-orn" aria-hidden="true">
       <span class="line"></span><span class="diamond"></span>
@@ -362,7 +363,7 @@
           "</div>" +
           '<ul class="astro-list" id="astro-list" role="listbox"></ul>' +
           '<div class="astro-foot"><span>↑↓ sight</span><span>↵ sail there</span><span>esc dismiss</span>' +
-            "<span>" + index.length + " landmarks</span></div>" +
+            "<span>" + index.length + " landmarks · chips, projects, regions, plates</span></div>" +
         "</div>";
       document.body.appendChild(scrim);
       input = scrim.querySelector(".astro-input");
