@@ -1,6 +1,6 @@
 {
   "name": "@lttr/claude-code-map",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Interactive local atlas of your Claude Code setup — skills, commands, subagents, MCP servers, plugins, hooks and how often you actually use them.",
   "keywords": [
     "claude",
