@@ -43,4 +43,4 @@ node bin/cli.ts --out atlas.html
 2. `src/render.ts` turns that into atlas HTML fragments.
 3. `bin/cli.ts` either serves them over HTTP or writes a single self-contained page.
 
-Shared vocabulary (servitor, plate, heat, contested name, …) lives in [`BOUNDED-CONTEXT.md`](./BOUNDED-CONTEXT.md).
+The atlas speaks in a cartographer's voice. Shared vocabulary (servitor, plate, heat, landmark, contested name, …) lives in [`GLOSSARY.md`](./GLOSSARY.md).
