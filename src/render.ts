@@ -20,13 +20,6 @@ const esc = (s: unknown): string =>
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
   );
 
-const KIND_LABEL: Record<Kind, string> = {
-  mcp: "MCPs",
-  skill: "skills",
-  command: "commands",
-  subagent: "subagents",
-  hook: "hooks",
-};
 const KIND_SINGULAR: Record<Kind, string> = {
   mcp: "MCP",
   skill: "skill",
@@ -111,7 +104,7 @@ function chipsOf(items: Item[]): string {
   return `<div class="chips">${sorted.map(chip).join("")}</div>`;
 }
 
-function kindSection(label: string, items: Item[], kind: Kind): string {
+function kindSection(label: string, items: Item[]): string {
   if (!items.length) return "";
   return `<div class="sublabel">${esc(label)} <span class="ct">· ${items.length}</span></div>${chipsOf(items)}`;
 }
@@ -131,11 +124,11 @@ function pluginBlock(p: PluginInfo): string {
       ${useBadge(p.items)}
       <span class="plug-meta">@ ${esc(p.marketplace)}${p.version ? " · v" + esc(p.version) : ""}</span>
     </div>
-    ${kindSection("skills", skills, "skill")}
-    ${kindSection("commands", commands, "command")}
-    ${kindSection("subagents", subagents, "subagent")}
-    ${kindSection("MCPs", mcps, "mcp")}
-    ${kindSection("hooks", hooks, "hook")}
+    ${kindSection("skills", skills)}
+    ${kindSection("commands", commands)}
+    ${kindSection("subagents", subagents)}
+    ${kindSection("MCPs", mcps)}
+    ${kindSection("hooks", hooks)}
     ${empty ? `<div class="muted">— no items</div>` : ""}
   </div>`;
 }
@@ -485,10 +478,10 @@ function gazetteer(result: CollectResult): string {
       <div class="gaz-col">
         <h3>Global <span class="count">${global.length} item${global.length === 1 ? "" : "s"}</span></h3>
         <p class="region-note">~/.claude/{skills,commands,agents} plus hooks from ~/.claude/settings.json — present in every bay.</p>
-        ${kindSection("skills", gs, "skill")}
-        ${kindSection("commands", gc, "command")}
-        ${kindSection("subagents", ga, "subagent")}
-        ${kindSection("hooks", gh, "hook")}
+        ${kindSection("skills", gs)}
+        ${kindSection("commands", gc)}
+        ${kindSection("subagents", ga)}
+        ${kindSection("hooks", gh)}
       </div>
       <div class="gaz-col">
         <h3>User Plugins <span class="count">${result.userPlugins.length} plugin${result.userPlugins.length === 1 ? "" : "s"}</span></h3>
@@ -588,11 +581,11 @@ function projectCard(proj: ProjectInfo): string {
       ${useBadge([...local, ...proj.projectMcps, ...proj.scopedPlugins.flatMap((sp) => sp.items)])}
       ${briefingStamp(proj.context)}
     </div>
-    ${kindSection("local skills", localSk, "skill")}
-    ${kindSection("local commands", localCm, "command")}
-    ${kindSection("local subagents", localAg, "subagent")}
-    ${kindSection("local hooks", localHk, "hook")}
-    ${proj.projectMcps.length ? kindSection("project MCPs", proj.projectMcps, "mcp") : ""}
+    ${kindSection("local skills", localSk)}
+    ${kindSection("local commands", localCm)}
+    ${kindSection("local subagents", localAg)}
+    ${kindSection("local hooks", localHk)}
+    ${proj.projectMcps.length ? kindSection("project MCPs", proj.projectMcps) : ""}
     ${proj.scopedPlugins.length ? `<div class="sublabel">scoped plugins <span class="ct">· ${proj.scopedPlugins.length}</span></div>${proj.scopedPlugins.map(pluginBlock).join("")}` : ""}
     ${empty ? `<div class="muted">global &amp; user-scope only</div>` : ""}
   </div>`;
@@ -654,7 +647,7 @@ export function renderFullPage(shellHtml: string, css: string, atlasFragment: st
     `<div id="atlas" class="atlas">${atlasFragment}</div>\n  `,
   );
   // Drop the runtime fetch script — atlas is already inlined.
-  out = out.replace(/<script>\s*\(function \(\) \{[\s\S]*?\}\)\(\);[\s\S]*?<\/script>/, (m) => {
+  out = out.replace(/<script>\s*\(function \(\) \{[\s\S]*?\}\)\(\);[\s\S]*?<\/script>/, () => {
     // Keep only the date-stamp portion of the inline script.
     return `<script>
   (function () {
