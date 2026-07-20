@@ -251,6 +251,19 @@ h1.title em { font-style: italic; color: var(--accent); }
   font-family: "IM Fell English", serif; font-size: 15px; vertical-align: super;
 }
 
+/* Invocation restriction from frontmatter. Manicule ☞ = only the user's hand
+   invokes it (disable-model-invocation); spark ✳ = only the model reaches for
+   it, no slash command (user-invocable: false). Muted so recency ink still
+   dominates; details in the chip popover. */
+.chip.inv-user::before,
+.chip.inv-model::before {
+  font-size: 15px; opacity: .7; margin-right: 1px;
+  font-family: "IM Fell English", serif;
+}
+.chip.inv-user::before { content: "☞"; }
+.chip.inv-model::before { content: "✳"; }
+.chip-pop .pop-inv { font-style: italic; }
+
 /* Relations plate — declared skill/command references, behind a toggle knob */
 .relations-plate .plate-title { display: flex; align-items: baseline; gap: 10px; }
 .amb-key.amb { color: var(--accent); }

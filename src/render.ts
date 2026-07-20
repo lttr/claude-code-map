@@ -29,6 +29,8 @@ function chipAria(item: Item): string {
   const last = u.last ? new Date(u.last * 1000).toISOString().slice(0, 10) : "never";
   const parts = [`${item.name}, ${KIND_SINGULAR[item.kind]}`];
   if (item.contested) parts.push("contested name");
+  if (item.invocation === "user-only") parts.push("user-invoked only, Claude cannot invoke it");
+  if (item.invocation === "model-only") parts.push("model-invoked only, no slash command");
   if (item.kind === "mcp" && item.transport) parts.push(`${item.transport} transport`);
   parts.push(`${u.total} invocation${u.total === 1 ? "" : "s"} total`);
   parts.push(`last used ${last}`);
@@ -41,6 +43,8 @@ function chipAria(item: Item): string {
 function chip(item: Item): string {
   const cls = [`chip`, `k-${item.kind}`, `r-${item.recency}`];
   if (item.contested) cls.push("contested");
+  if (item.invocation === "user-only") cls.push("inv-user");
+  if (item.invocation === "model-only") cls.push("inv-model");
   const out = item.refsOut ?? [], inn = item.refsIn ?? [];
   if (out.length || inn.length) cls.push("has-rel");
   const u = item.usage;
@@ -55,7 +59,8 @@ function chip(item: Item): string {
   const data =
     ` data-name="${esc(item.name.toLowerCase())}" data-label="${esc(item.name)}" data-kind="${item.kind}"` +
     ` data-loc="${esc(item.location)}"${usageLine ? ` data-usage="${esc(usageLine)}"` : ""}${extra ? ` data-extra="${esc(extra)}"` : ""}` +
-    `${out.length ? ` data-out="${esc(out.join(","))}"` : ""}${inn.length ? ` data-in="${esc(inn.join(","))}"` : ""}${item.contested ? ` data-contested="1"` : ""}${item.contestedWith?.length ? ` data-contested-with="${esc(item.contestedWith.join("; "))}"` : ""}`;
+    `${out.length ? ` data-out="${esc(out.join(","))}"` : ""}${inn.length ? ` data-in="${esc(inn.join(","))}"` : ""}${item.contested ? ` data-contested="1"` : ""}${item.contestedWith?.length ? ` data-contested-with="${esc(item.contestedWith.join("; "))}"` : ""}` +
+    `${item.invocation === "user-only" ? ` data-inv="☞ user-invoked only — disable-model-invocation: true"` : ""}${item.invocation === "model-only" ? ` data-inv="✳ model-invoked only (no slash command) — user-invocable: false"` : ""}`;
   const ext = item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
   // Route marker, revealed only in relations mode: →n outgoing, ←n incoming.
   const mark = (out.length || inn.length)
@@ -376,6 +381,8 @@ function compassPlate(): string {
         <div class="leg-group">
           <p class="leg-head">Marks</p>
           <span class="leg-sample"><span class="chip k-skill r-warm contested">name</span></span><span class="leg-desc">contested · 2+ items share this name</span>
+          <span class="leg-sample"><span class="chip k-skill r-warm inv-user">name</span></span><span class="leg-desc">user-invoked only · Claude can't trigger it</span>
+          <span class="leg-sample"><span class="chip k-skill r-warm inv-model">name</span></span><span class="leg-desc">model-invoked only · no slash command</span>
         </div>
       </div>
     </div>

@@ -167,6 +167,7 @@
       pop.innerHTML =
         '<div class="pop-head"><span class="pop-name k-' + d.kind + '">' + (d.label || "") + "</span>" +
           '<span class="pop-kind">' + d.kind + (d.contested ? " · contested" : "") + (d.loc ? " · " + d.loc : "") + "</span></div>" +
+        (d.inv ? '<div class="pop-meta pop-inv">' + d.inv + "</div>" : "") +
         (d.extra ? '<div class="pop-meta">' + d.extra + "</div>" : "") +
         (d.usage ? '<div class="pop-meta">' + d.usage + "</div>" : "") +
         (d.contestedWith ? '<div class="pop-meta pop-contested">name also at — ' + d.contestedWith + "</div>" : "") +

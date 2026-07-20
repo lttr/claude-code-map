@@ -73,6 +73,10 @@ export interface Item {
   // names that point back at it. Skills/commands only; empty otherwise.
   refsOut?: string[];
   refsIn?: string[];
+  // Frontmatter invocation restriction (skills/commands only; unset = both):
+  //   user-only  → disable-model-invocation: true  (slash-command only)
+  //   model-only → user-invocable: false           (no slash command)
+  invocation?: "user-only" | "model-only";
 }
 
 export interface PluginInfo {
@@ -735,6 +739,17 @@ function hasPathsFrontmatter(txt: string): boolean {
   return !!m && /^\s*paths\s*:/m.test(m[1]);
 }
 
+// Skill/command frontmatter can restrict who invokes it (docs "Control who
+// invokes a skill"): disable-model-invocation: true → user-only (slash only),
+// user-invocable: false → model-only (no slash command). Unset → both.
+function invocationFromFrontmatter(txt: string): Item["invocation"] {
+  const m = txt.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!m) return undefined;
+  if (/^\s*disable-model-invocation\s*:\s*true\b/m.test(m[1])) return "user-only";
+  if (/^\s*user-invocable\s*:\s*false\b/m.test(m[1])) return "model-only";
+  return undefined;
+}
+
 // Only tokens that look like file paths count as imports — filters handles and
 // prose noise from real @path/to/file mentions. Approximate, by design.
 function looksLikeImport(s: string): boolean {
@@ -1159,6 +1174,7 @@ export async function collect(): Promise<CollectResult> {
     if (!path) continue;
     const body = await readFile(path, "utf8").catch(() => "");
     if (!body) continue;
+    it.invocation = invocationFromFrontmatter(body);
     const refs = extractRefs(body, visibleNames(it), it.name.toLowerCase());
     if (!refs.length) continue;
     relations.push({

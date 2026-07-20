@@ -7,6 +7,7 @@ An interactive **cartographer's atlas** of your Claude Code setup. It scans `~/.
 - **Inventory** of all your servitors (skills, commands, subagents, MCPs, hooks) across global, plugin, and project scopes.
 - **Heat** — recency tiers (`hot` ≤7d, `warm` ≤30d, `cool` ≤90d, `stale`, `none`) derived from your transcript history, rendered as ink density.
 - **Contested names** — invocation tokens that resolve to two or more implementations (e.g. a global skill `verify` and a plugin command `/verify`).
+- **Invocation marks** — ☞ user-invoked only (`disable-model-invocation: true`), ✳ model-invoked only (`user-invocable: false`), scraped from skill/command frontmatter.
 - **Regional plates** — one map plate per workspace region, with a project card per project sorted by activity.
 
 ## Usage

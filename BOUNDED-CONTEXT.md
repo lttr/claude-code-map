@@ -18,6 +18,7 @@ Glossary of terms used in this project. Implementation details belong in code; t
 ## Cross-cutting
 
 - **Contested name** — an invocation token that resolves to 2+ implementations across kinds or locations (e.g., a global skill `verify` and a plugin command `/verify`). Replaces the earlier MCP-only "cross-scope" concept. Counted in the tally; flagged in the gazetteer.
+- **Invocation mark** — a skill/command's frontmatter restriction on who may invoke it. `user-only` (☞, from `disable-model-invocation: true`): slash-command only, Claude can't trigger it. `model-only` (✳, from `user-invocable: false`): no slash command. Unset means both may invoke.
 
 ## Standing context
 
