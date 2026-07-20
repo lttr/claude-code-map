@@ -70,7 +70,7 @@ export interface Item {
   // When contested, the other origins (kind · place) that share this name.
   contestedWith?: string[];
   // Declared references (static body scrape): names this item points to, and
-  // names that point back at it. Skills/commands only; empty otherwise.
+  // names that point back at it. Skills, commands, and subagents only; empty otherwise.
   refsOut?: string[];
   refsIn?: string[];
   // Frontmatter invocation restriction (skills/commands only; unset = both):
@@ -103,20 +103,20 @@ export interface ContextSource {
   kind: ContextKind;
   scope: "managed" | "user" | "project" | "local";
   path: string;
-  lines: number;              // whole-file line count
+  lines: number; // whole-file line count
   loadMode: LoadMode;
-  importCount?: number;        // count-and-flag: number of @path mentions
-  importLines?: number;        // best-effort ONE-level resolved lines (approximate)
-  importsDeep?: boolean;       // a resolved import itself has @path mentions (not followed)
-  overCliff?: boolean;         // CLAUDE.md over the ~200-line adherence cliff
+  importCount?: number; // count-and-flag: number of @path mentions
+  importLines?: number; // best-effort ONE-level resolved lines (approximate)
+  importsDeep?: boolean; // a resolved import itself has @path mentions (not followed)
+  overCliff?: boolean; // CLAUDE.md over the ~200-line adherence cliff
 }
 
 export interface ProjectContext {
   sources: ContextSource[];
-  alwaysLines: number;         // lines actually loaded every session (marginal)
-  onDemandRules: number;       // count of path-scoped rules
-  hasOverflow: boolean;        // any memory-index truncated
-  hasOverCliff: boolean;       // any CLAUDE.md over the cliff
+  alwaysLines: number; // lines actually loaded every session (marginal)
+  onDemandRules: number; // count of path-scoped rules
+  hasOverflow: boolean; // any memory-index truncated
+  hasOverCliff: boolean; // any CLAUDE.md over the cliff
 }
 
 // Lines a source actually contributes at launch: on-demand rules add nothing,
@@ -156,11 +156,13 @@ export interface CollectResult {
     dormant: number;
   };
   relations: Relation[];
+  wiring: WiringIssue[];
   generatedAt: number;
 }
 
-// A declared reference from one skill/command to another, scraped from body text
-// (slash or backticked mentions that resolve to a known item name). Static only.
+// A declared reference from one skill/command/subagent to another, scraped from
+// body text (slash or backticked mentions that resolve to a known item name).
+// Static only.
 export interface Relation {
   from: string;
   fromKind: Kind;
@@ -168,14 +170,37 @@ export interface Relation {
   refs: { name: string; kind: Kind; ambiguous: boolean }[];
 }
 
+// A frayed line: declared wiring whose far end doesn't exist. All checks are
+// single stat/PATH lookups — nothing is executed.
+//   hook-script — a hook command names a script file that is missing
+//   binary      — an allowed-tools Bash(cmd) binary not found on PATH
+//   import      — an @path mention in a body that doesn't resolve
+//   phantom     — a backticked `/slug` mention resolving to no known item
+export interface WiringIssue {
+  issue: "hook-script" | "binary" | "import" | "phantom";
+  from: string;
+  fromKind: Kind;
+  where: string; // human place label: global / plugin <name> / ~/path
+  detail: string; // the missing thing — path, binary, or slug
+}
+
 // ---------- helpers ----------
 
 async function pathExists(p: string): Promise<boolean> {
-  try { await stat(p); return true; } catch { return false; }
+  try {
+    await stat(p);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function readJSON<T = any>(path: string): Promise<T | undefined> {
-  try { return JSON.parse(await readFile(path, "utf8")); } catch { return undefined; }
+  try {
+    return JSON.parse(await readFile(path, "utf8"));
+  } catch {
+    return undefined;
+  }
 }
 
 async function run(cmd: string, args: string[]): Promise<string> {
@@ -190,8 +215,13 @@ async function run(cmd: string, args: string[]): Promise<string> {
 async function listDir(path: string): Promise<string[]> {
   try {
     const ents = await readdir(path, { withFileTypes: true });
-    return ents.filter((e) => e.isDirectory()).map((e) => e.name).sort();
-  } catch { return []; }
+    return ents
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      .sort();
+  } catch {
+    return [];
+  }
 }
 
 async function listMarkdownItems(dir: string): Promise<string[]> {
@@ -275,7 +305,10 @@ async function resolveCwd(folder: string, projectsDir: string): Promise<string> 
       try {
         const txt = await readFile(join(dir, e.name), "utf8");
         const m = txt.match(/"cwd"\s*:\s*"([^"]+)"/);
-        if (m) { cwd = m[1]; break; }
+        if (m) {
+          cwd = m[1];
+          break;
+        }
       } catch {}
     }
   } catch {}
@@ -315,18 +348,43 @@ async function parseTranscriptFile(filePath: string, fallback: string): Promise<
     const ts = Date.parse(tsM[1]) / 1000;
     if (!ts) continue;
     const project = line.match(reCwd)?.[1] || fallback;
-    if (hasSk) { reSk.lastIndex = 0; let m; while ((m = reSk.exec(line))) events.push({ ts, project, kind: "skill", name: m[1] }); }
-    if (hasCmd) { reCmd.lastIndex = 0; let m; while ((m = reCmd.exec(line))) events.push({ ts, project, kind: "command", name: m[1] }); }
-    if (hasSub) { reSub.lastIndex = 0; let m; while ((m = reSub.exec(line))) events.push({ ts, project, kind: "subagent", name: m[1] }); }
-    if (hasRead) { reSkRead.lastIndex = 0; let m; while ((m = reSkRead.exec(line))) events.push({ ts, project, kind: "skill", name: m[1] }); }
-    if (hasMcp) { reMcp.lastIndex = 0; let m; while ((m = reMcp.exec(line))) events.push({ ts, project, kind: "mcp", name: m[1] }); }
+    if (hasSk) {
+      reSk.lastIndex = 0;
+      let m;
+      while ((m = reSk.exec(line))) events.push({ ts, project, kind: "skill", name: m[1] });
+    }
+    if (hasCmd) {
+      reCmd.lastIndex = 0;
+      let m;
+      while ((m = reCmd.exec(line))) events.push({ ts, project, kind: "command", name: m[1] });
+    }
+    if (hasSub) {
+      reSub.lastIndex = 0;
+      let m;
+      while ((m = reSub.exec(line))) events.push({ ts, project, kind: "subagent", name: m[1] });
+    }
+    if (hasRead) {
+      reSkRead.lastIndex = 0;
+      let m;
+      while ((m = reSkRead.exec(line))) events.push({ ts, project, kind: "skill", name: m[1] });
+    }
+    if (hasMcp) {
+      reMcp.lastIndex = 0;
+      let m;
+      while ((m = reMcp.exec(line))) events.push({ ts, project, kind: "mcp", name: m[1] });
+    }
   }
   return events;
 }
 
 type UsageKind = "skill" | "command" | "subagent" | "mcp";
 type KindMaps = Record<UsageKind, Map<string, UsageBuckets>>;
-const emptyKindMaps = (): KindMaps => ({ skill: new Map(), command: new Map(), subagent: new Map(), mcp: new Map() });
+const emptyKindMaps = (): KindMaps => ({
+  skill: new Map(),
+  command: new Map(),
+  subagent: new Map(),
+  mcp: new Map(),
+});
 
 interface UsageMaps {
   global: KindMaps;
@@ -341,8 +399,10 @@ async function buildUsage(): Promise<UsageMaps> {
   };
   let topEnts: { name: string; isDirectory(): boolean }[] = [];
   try {
-    topEnts = await readdir(projectsDir, { withFileTypes: true }) as any;
-  } catch { return usage; }
+    topEnts = (await readdir(projectsDir, { withFileTypes: true })) as any;
+  } catch {
+    return usage;
+  }
 
   const now = NOW_SEC();
   const bumpInto = (kind: UsageKind, name: string, project: string, ts: number) => {
@@ -359,13 +419,21 @@ async function buildUsage(): Promise<UsageMaps> {
     if (!d.isDirectory()) continue;
     const sub = join(projectsDir, d.name);
     let files: { name: string; isFile(): boolean }[] = [];
-    try { files = await readdir(sub, { withFileTypes: true }) as any; } catch { continue; }
+    try {
+      files = (await readdir(sub, { withFileTypes: true })) as any;
+    } catch {
+      continue;
+    }
     const fallback = await resolveCwd(d.name, projectsDir);
     for (const f of files) {
       if (!f.isFile() || !f.name.endsWith(".jsonl")) continue;
       const filePath = join(sub, f.name);
       let mtime = 0;
-      try { mtime = (await stat(filePath)).mtimeMs; } catch { continue; }
+      try {
+        mtime = (await stat(filePath)).mtimeMs;
+      } catch {
+        continue;
+      }
       let cached = transcriptCache.get(filePath);
       if (!cached || cached.mtime !== mtime) {
         const events = await parseTranscriptFile(filePath, fallback);
@@ -399,7 +467,9 @@ async function readMarketplaces(): Promise<Map<string, MarketplaceInfo>> {
     const src = info?.source;
     const sourceLabel = src?.repo
       ? `github:${src.repo}`
-      : src?.path ? src.path.replace(HOME, "~") : "?";
+      : src?.path
+        ? src.path.replace(HOME, "~")
+        : "?";
     m.set(name, { exists, active, archived, sourceLabel });
   }
   return m;
@@ -414,8 +484,10 @@ function pluginStatus(
   const m = marketplaces.get(marketplace);
   if (!m || !m.exists) return { status: "orphaned", note: "marketplace not registered/installed" };
   const dirName = installPath ? basename(installPath) : pluginName;
-  if (m.active.has(dirName) || m.active.has(pluginName)) return { status: "active", note: m.sourceLabel };
-  if (m.archived.has(dirName) || m.archived.has(pluginName)) return { status: "archived", note: `archived in ${m.sourceLabel}` };
+  if (m.active.has(dirName) || m.active.has(pluginName))
+    return { status: "active", note: m.sourceLabel };
+  if (m.archived.has(dirName) || m.archived.has(pluginName))
+    return { status: "archived", note: `archived in ${m.sourceLabel}` };
   return { status: "removed", note: `not present in ${m.sourceLabel}` };
 }
 
@@ -425,9 +497,10 @@ const enabledPluginsCache = new Map<string, Set<string>>();
 async function enabledPluginsAt(scopeKey: string): Promise<Set<string>> {
   if (enabledPluginsCache.has(scopeKey)) return enabledPluginsCache.get(scopeKey)!;
   const set = new Set<string>();
-  const files = scopeKey === "__user__"
-    ? [join(HOME, ".claude/settings.json")]
-    : [join(scopeKey, ".claude/settings.json"), join(scopeKey, ".claude/settings.local.json")];
+  const files =
+    scopeKey === "__user__"
+      ? [join(HOME, ".claude/settings.json")]
+      : [join(scopeKey, ".claude/settings.json"), join(scopeKey, ".claude/settings.local.json")];
   for (const f of files) {
     const d = await readJSON<any>(f);
     for (const [k, v] of Object.entries(d?.enabledPlugins ?? {})) if (v) set.add(k);
@@ -444,7 +517,8 @@ async function enabledPluginsAt(scopeKey: string): Promise<Set<string>> {
 const sanitizeMcp = (s: string): string => s.replace(/[^A-Za-z0-9_]/g, "_");
 function mcpServerKey(name: string, location: Location, pluginName?: string): string {
   if (location === "claude-ai-remote") return sanitizeMcp(`claude.ai ${name}`);
-  if (location === "user-plugin" || location === "scoped-plugin") return sanitizeMcp(`plugin_${pluginName}_${name}`);
+  if (location === "user-plugin" || location === "scoped-plugin")
+    return sanitizeMcp(`plugin_${pluginName}_${name}`);
   return sanitizeMcp(name);
 }
 
@@ -464,13 +538,12 @@ function lookupUsage(
     const src = projectPath ? usage.perProject.get(projectPath)?.mcp : usage.global.mcp;
     return src?.get(key) ?? emptyBuckets();
   }
-  const kindPool: ("skill" | "command" | "subagent")[] = kind === "subagent" ? ["subagent"] : ["skill", "command"];
+  const kindPool: ("skill" | "command" | "subagent")[] =
+    kind === "subagent" ? ["subagent"] : ["skill", "command"];
   const keys = pluginName ? [`${pluginName}:${name}`, name] : [name];
   let merged = emptyBuckets();
   for (const k of kindPool) {
-    const src = projectPath
-      ? usage.perProject.get(projectPath)?.[k]
-      : usage.global[k];
+    const src = projectPath ? usage.perProject.get(projectPath)?.[k] : usage.global[k];
     if (!src) continue;
     for (const key of keys) {
       const b = src.get(key);
@@ -518,7 +591,7 @@ async function scanUserScopeMcps(): Promise<RawMcp[]> {
     out.push({
       name,
       location: "user-mcp",
-      transport: cfg?.type ?? (cfg?.command ? "stdio" : (cfg?.url ? "http" : "unknown")),
+      transport: cfg?.type ?? (cfg?.command ? "stdio" : cfg?.url ? "http" : "unknown"),
       url: cfg?.url,
     });
   }
@@ -538,7 +611,7 @@ async function scanLocalScopeMcps(): Promise<RawMcp[]> {
         name,
         location: "local",
         projectPath: path,
-        transport: cfg?.type ?? (cfg?.command ? "stdio" : (cfg?.url ? "http" : "unknown")),
+        transport: cfg?.type ?? (cfg?.command ? "stdio" : cfg?.url ? "http" : "unknown"),
         url: cfg?.url,
       });
     }
@@ -585,7 +658,8 @@ async function scanProjectAndPluginMcps(installs: PluginInstall[]): Promise<RawM
   // Match plugin source roots: ~/.claude/plugins/{cache,marketplaces}/ are the documented locations
   // (https://code.claude.com/docs/en/discover-plugins); `marketplaces` and `claude-marketplace/plugins`
   // catch nested marketplace checkouts that ship plugins alongside a marketplace.json.
-  const PLUGIN_SRC = /\/(marketplaces|claude-marketplace\/plugins|\.claude\/plugins\/(cache|marketplaces))\//;
+  const PLUGIN_SRC =
+    /\/(marketplaces|claude-marketplace\/plugins|\.claude\/plugins\/(cache|marketplaces))\//;
 
   for (const path of fd.split("\n").filter(Boolean)) {
     const dir = path.replace(/\/\.mcp\.json$/, "");
@@ -620,7 +694,7 @@ async function scanProjectAndPluginMcps(installs: PluginInstall[]): Promise<RawM
           name,
           location: "project-mcp",
           projectPath: dir,
-          transport: cfg?.type ?? (cfg?.command ? "stdio" : (cfg?.url ? "http" : "project")),
+          transport: cfg?.type ?? (cfg?.command ? "stdio" : cfg?.url ? "http" : "project"),
           url: cfg?.url,
         });
       }
@@ -637,6 +711,7 @@ async function scanProjectAndPluginMcps(installs: PluginInstall[]): Promise<RawM
 interface RawHook {
   event: string;
   matcher?: string;
+  commands: string[];
 }
 
 function extractHooks(data: any): RawHook[] {
@@ -647,7 +722,10 @@ function extractHooks(data: any): RawHook[] {
     if (!Array.isArray(entries)) continue;
     for (const e of entries as any[]) {
       const matcher = typeof e?.matcher === "string" && e.matcher ? e.matcher : undefined;
-      out.push({ event, matcher });
+      const commands = (Array.isArray(e?.hooks) ? e.hooks : [])
+        .map((h: any) => h?.command)
+        .filter((c: any): c is string => typeof c === "string" && !!c);
+      out.push({ event, matcher, commands });
     }
   }
   return out;
@@ -673,9 +751,10 @@ async function readHooksFromPlugin(installPath: string): Promise<RawHook[]> {
 
 // ---------- declared relations (static body scrape) ----------
 
-// Resolve a skill/command item back to its source markdown:
-//   skill   → <base>/skills/<name>/SKILL.md
-//   command → <base>/commands/<name>.md   (":" namespacing maps to a subdir)
+// Resolve a skill/command/subagent item back to its source markdown:
+//   skill    → <base>/skills/<name>/SKILL.md
+//   command  → <base>/commands/<name>.md   (":" namespacing maps to a subdir)
+//   subagent → <base>/agents/<name>.md
 // base is the global ~/.claude, a plugin install path, or a project's .claude.
 function bodyPathFor(it: Item): string | undefined {
   let base: string;
@@ -689,6 +768,7 @@ function bodyPathFor(it: Item): string | undefined {
   } else return undefined;
   if (it.kind === "skill") return join(base, "skills", it.name, "SKILL.md");
   if (it.kind === "command") return join(base, "commands", it.name.replace(/:/g, "/") + ".md");
+  if (it.kind === "subagent") return join(base, "agents", it.name.replace(/:/g, "/") + ".md");
   return undefined;
 }
 
@@ -708,6 +788,155 @@ function extractRefs(body: string, known: Set<string>, self: string): string[] {
     }
   }
   return [...found].sort();
+}
+
+// ---------- frayed lines (broken-wiring checks) ----------
+// Everything here is a stat or PATH lookup on something a body/config declares;
+// nothing is executed. Unresolvable tokens (env vars we can't expand, globs,
+// relative paths with unknown cwd) are skipped, not flagged — precision over recall.
+
+const tildePath = (p: string): string => (p.startsWith(HOME) ? "~" + p.slice(HOME.length) : p);
+
+// Script-looking path tokens inside a hook command string. Only tokens we can
+// resolve to an absolute path are checked: ~/, /abs, $CLAUDE_PROJECT_DIR (when the
+// hook is project-scoped), $CLAUDE_PLUGIN_ROOT (when plugin-shipped).
+const reScriptTok =
+  /(?:^|[\s"'=])((?:~\/|\/|\$\{?CLAUDE_(?:PROJECT_DIR|PLUGIN_ROOT)\}?\/)[^\s"';|&)]*\.(?:sh|bash|py|ts|js|mjs|cjs))/g;
+
+async function missingHookScripts(
+  h: RawHook,
+  ctx: { projectPath?: string; pluginRoot?: string },
+): Promise<string[]> {
+  const missing = new Set<string>();
+  for (const cmd of h.commands) {
+    reScriptTok.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = reScriptTok.exec(cmd))) {
+      let p = m[1]
+        .replace(/^\$\{?CLAUDE_PROJECT_DIR\}?/, ctx.projectPath ?? "$")
+        .replace(/^\$\{?CLAUDE_PLUGIN_ROOT\}?/, ctx.pluginRoot ?? "$");
+      if (p.startsWith("~/")) p = join(HOME, p.slice(2));
+      if (p.includes("$") || !p.startsWith("/")) continue; // couldn't resolve → skip
+      if (!(await pathExists(p))) missing.add(tildePath(p));
+    }
+  }
+  return [...missing];
+}
+
+// Binaries named in frontmatter allowed-tools Bash(cmd:*) entries. Shell builtins
+// and anything with a var/glob are skipped.
+const SHELL_BUILTINS = new Set([
+  "cd",
+  "echo",
+  "source",
+  ".",
+  "export",
+  "set",
+  "exit",
+  "true",
+  "false",
+  "test",
+  "[",
+  "[[",
+  "command",
+  "type",
+  "eval",
+  "kill",
+  "wait",
+  "trap",
+  "read",
+  "printf",
+  "pwd",
+  "alias",
+  "time",
+  "if",
+  "for",
+  "while",
+]);
+
+const PATH_DIRS = (process.env.PATH ?? "").split(":").filter(Boolean);
+const binCache = new Map<string, boolean>();
+async function binOnPath(bin: string): Promise<boolean> {
+  const hit = binCache.get(bin);
+  if (hit !== undefined) return hit;
+  let found = false;
+  for (const d of PATH_DIRS) {
+    if (await pathExists(join(d, bin))) {
+      found = true;
+      break;
+    }
+  }
+  binCache.set(bin, found);
+  return found;
+}
+
+const reBashTool = /Bash\(\s*([^)\s:,]+)/g;
+function bashBinaries(body: string): string[] {
+  const fm = body.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fm) return [];
+  const out = new Set<string>();
+  reBashTool.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = reBashTool.exec(fm[1]))) {
+    const tok = m[1];
+    if (/[$*{]/.test(tok) || tok.startsWith("-") || SHELL_BUILTINS.has(tok)) continue;
+    out.add(tok);
+  }
+  return [...out];
+}
+
+// @path imports worth checking: reuses importSpecs (code fences already stripped),
+// minus placeholders (<SKILL_DIR>), vars, URLs, and npm package names (@scope/pkg
+// passes looksLikeImport but is not a file). A checkable spec must be anchored
+// (~/, ./, ../, /) or end in a file extension.
+function checkableImports(body: string): string[] {
+  return importSpecs(body).filter(
+    (s) =>
+      !/[<>{}$]/.test(s) &&
+      !s.includes("://") &&
+      (/^(~\/|\.\/|\.\.\/|\/)/.test(s) || /\.[a-z0-9]+$/i.test(s)),
+  );
+}
+
+// Phantom refs: a backticked, colon-namespaced `/ns:slug` is unambiguously Claude
+// Code command syntax — if neither the full name nor the part after the colon
+// resolves to anything known, it points at a renamed or removed item. Plain
+// `/slug` backticks are NOT scanned: they collide with URL routes (`/about`,
+// `/healthz`) too often to judge statically.
+const reTickSlash = /`\/([a-z][a-z0-9_-]*:[a-z0-9:_-]+)`/gi;
+// Documentation placeholders that explain the namespace syntax itself.
+const NOT_PHANTOM = new Set(["namespace:command", "plugin:command", "plugin-name:command"]);
+
+function phantomRefs(body: string, known: Set<string>, self: string): string[] {
+  const noFences = body.replace(/```[\s\S]*?```/g, "").replace(/~~~[\s\S]*?~~~/g, "");
+  const out = new Set<string>();
+  reTickSlash.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = reTickSlash.exec(noFences))) {
+    const n = m[1].toLowerCase();
+    if (n === self || known.has(n) || NOT_PHANTOM.has(n)) continue;
+    // A namespaced invocation like /df:code-review resolves to the plugin's bare
+    // command name ("code-review") — items are inventoried without the prefix.
+    const short = n.slice(n.indexOf(":") + 1);
+    if (short === self || known.has(short)) continue;
+    out.add(n);
+  }
+  return [...out].sort();
+}
+
+// Human place label for a wiring row — where the frayed declaration lives.
+function placeLabel(it: Item): string {
+  switch (it.location) {
+    case "global":
+      return "global";
+    case "user-plugin":
+    case "scoped-plugin":
+      return `plugin ${it.pluginName ?? "?"}`;
+    case "local":
+      return it.projectPath ? tildePath(it.projectPath) : "?";
+    default:
+      return it.location;
+  }
 }
 
 // ---------- standing-context scanning ----------
@@ -753,8 +982,14 @@ function invocationFromFrontmatter(txt: string): Item["invocation"] {
 // Only tokens that look like file paths count as imports — filters handles and
 // prose noise from real @path/to/file mentions. Approximate, by design.
 function looksLikeImport(s: string): boolean {
-  return s.startsWith("~/") || s.startsWith("./") || s.startsWith("../")
-    || s.startsWith("/") || s.includes("/") || /\.(md|markdown|txt)$/i.test(s);
+  return (
+    s.startsWith("~/") ||
+    s.startsWith("./") ||
+    s.startsWith("../") ||
+    s.startsWith("/") ||
+    s.includes("/") ||
+    /\.(md|markdown|txt)$/i.test(s)
+  );
 }
 
 function importSpecs(txt: string): string[] {
@@ -777,7 +1012,10 @@ function resolveImport(spec: string, fromFile: string): string {
 
 // Count-and-flag imports: how many @path mentions, one-level resolved line total,
 // and whether any resolved file itself imports further (undercount flag).
-async function scanImports(txt: string, fromFile: string): Promise<Pick<ContextSource, "importCount" | "importLines" | "importsDeep">> {
+async function scanImports(
+  txt: string,
+  fromFile: string,
+): Promise<Pick<ContextSource, "importCount" | "importLines" | "importsDeep">> {
   const specs = importSpecs(txt);
   if (!specs.length) return {};
   let importLines = 0;
@@ -788,16 +1026,24 @@ async function scanImports(txt: string, fromFile: string): Promise<Pick<ContextS
     importLines += lineCount(body);
     if (importSpecs(body).length) importsDeep = true;
   }
-  return { importCount: specs.length, importLines: importLines || undefined, importsDeep: importsDeep || undefined };
+  return {
+    importCount: specs.length,
+    importLines: importLines || undefined,
+    importsDeep: importsDeep || undefined,
+  };
 }
 
 async function walkMd(dir: string): Promise<string[]> {
   const out: string[] = [];
   let ents;
-  try { ents = await readdir(dir, { withFileTypes: true }); } catch { return out; }
+  try {
+    ents = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return out;
+  }
   for (const e of ents) {
     const full = join(dir, e.name);
-    if (e.isDirectory()) out.push(...await walkMd(full));
+    if (e.isDirectory()) out.push(...(await walkMd(full)));
     else if (e.isFile() && e.name.endsWith(".md")) out.push(full);
   }
   return out.sort();
@@ -812,7 +1058,10 @@ async function claudeMdSource(
   if (txt === undefined) return undefined;
   const lines = lineCount(txt);
   return {
-    kind, scope, path, lines,
+    kind,
+    scope,
+    path,
+    lines,
     loadMode: "always",
     overCliff: kind === "claude-md" && lines > CLIFF ? true : undefined,
     ...(await scanImports(txt, path)),
@@ -825,7 +1074,10 @@ async function ruleSources(dir: string, scope: ContextSource["scope"]): Promise<
     const txt = await readFile(path, "utf8").catch(() => undefined);
     if (txt === undefined) continue;
     out.push({
-      kind: "rule", scope, path, lines: lineCount(txt),
+      kind: "rule",
+      scope,
+      path,
+      lines: lineCount(txt),
       loadMode: hasPathsFrontmatter(txt) ? "on-demand" : "always",
       ...(await scanImports(txt, path)),
     });
@@ -840,7 +1092,13 @@ async function memorySource(folder: string | undefined): Promise<ContextSource |
   if (txt === undefined) return undefined;
   const lines = lineCount(txt);
   const overflow = lines > MEMORY_HEAD_LINES || Buffer.byteLength(txt, "utf8") > MEMORY_HEAD_BYTES;
-  return { kind: "memory-index", scope: "project", path, lines, loadMode: overflow ? "overflow-truncated" : "always" };
+  return {
+    kind: "memory-index",
+    scope: "project",
+    path,
+    lines,
+    loadMode: overflow ? "overflow-truncated" : "always",
+  };
 }
 
 function summariseContext(sources: ContextSource[]): ProjectContext {
@@ -854,15 +1112,22 @@ function summariseContext(sources: ContextSource[]): ProjectContext {
 }
 
 // A project's own standing context (marginal, on top of the baseline).
-async function scanContext(projectPath: string, folder: string | undefined): Promise<ProjectContext | undefined> {
+async function scanContext(
+  projectPath: string,
+  folder: string | undefined,
+): Promise<ProjectContext | undefined> {
   const sources: ContextSource[] = [];
   const md1 = await claudeMdSource(join(projectPath, "CLAUDE.md"), "claude-md", "project");
   if (md1) sources.push(md1);
-  const md2 = await claudeMdSource(join(projectPath, ".claude", "CLAUDE.md"), "claude-md", "project");
+  const md2 = await claudeMdSource(
+    join(projectPath, ".claude", "CLAUDE.md"),
+    "claude-md",
+    "project",
+  );
   if (md2) sources.push(md2);
   const local = await claudeMdSource(join(projectPath, "CLAUDE.local.md"), "claude-local", "local");
   if (local) sources.push(local);
-  sources.push(...await ruleSources(join(projectPath, ".claude", "rules"), "project"));
+  sources.push(...(await ruleSources(join(projectPath, ".claude", "rules"), "project")));
   const mem = await memorySource(folder);
   if (mem) sources.push(mem);
   return sources.length ? summariseContext(sources) : undefined;
@@ -873,7 +1138,7 @@ async function scanBaseline(): Promise<ContextSource[]> {
   const out: ContextSource[] = [];
   const userMd = await claudeMdSource(join(CLAUDE, "CLAUDE.md"), "claude-md", "user");
   if (userMd) out.push(userMd);
-  out.push(...await ruleSources(join(CLAUDE, "rules"), "user"));
+  out.push(...(await ruleSources(join(CLAUDE, "rules"), "user")));
   const managed = await claudeMdSource("/etc/claude-code/CLAUDE.md", "claude-md", "managed");
   if (managed) out.push(managed);
   return out;
@@ -884,6 +1149,9 @@ async function scanBaseline(): Promise<ContextSource[]> {
 export async function collect(): Promise<CollectResult> {
   enabledPluginsCache.clear();
   folderToCwdCache.clear();
+  binCache.clear();
+
+  const wiring: WiringIssue[] = [];
 
   const usage = await buildUsage();
   const marketplaces = await readMarketplaces();
@@ -910,13 +1178,28 @@ export async function collect(): Promise<CollectResult> {
 
   // Helper to make an Item from a raw record + lookup usage
   const makeItem = (rec: {
-    kind: Kind; name: string; location: Location;
-    pluginName?: string; projectPath?: string;
-    pluginId?: string; pluginMarketplace?: string; pluginInstallPath?: string;
-    pluginScope?: "user" | "project"; pluginStatus?: any; pluginStatusNote?: string;
-    transport?: string; url?: string;
+    kind: Kind;
+    name: string;
+    location: Location;
+    pluginName?: string;
+    projectPath?: string;
+    pluginId?: string;
+    pluginMarketplace?: string;
+    pluginInstallPath?: string;
+    pluginScope?: "user" | "project";
+    pluginStatus?: any;
+    pluginStatusNote?: string;
+    transport?: string;
+    url?: string;
   }): Item => {
-    const usageBuckets = lookupUsage(rec.name, rec.kind, rec.pluginName, rec.projectPath, usage, rec.location);
+    const usageBuckets = lookupUsage(
+      rec.name,
+      rec.kind,
+      rec.pluginName,
+      rec.projectPath,
+      usage,
+      rec.location,
+    );
     return {
       kind: rec.kind,
       name: rec.name,
@@ -939,11 +1222,22 @@ export async function collect(): Promise<CollectResult> {
 
   // Global items (skills/commands/agents under ~/.claude/, hooks from ~/.claude/settings.json)
   const globalItems: Item[] = [];
-  for (const name of await listDir(join(CLAUDE, "skills"))) globalItems.push(makeItem({ kind: "skill", name, location: "global" }));
-  for (const name of await listMarkdownItems(join(CLAUDE, "commands"))) globalItems.push(makeItem({ kind: "command", name, location: "global" }));
-  for (const name of await listMarkdownItems(join(CLAUDE, "agents"))) globalItems.push(makeItem({ kind: "subagent", name, location: "global" }));
+  for (const name of await listDir(join(CLAUDE, "skills")))
+    globalItems.push(makeItem({ kind: "skill", name, location: "global" }));
+  for (const name of await listMarkdownItems(join(CLAUDE, "commands")))
+    globalItems.push(makeItem({ kind: "command", name, location: "global" }));
+  for (const name of await listMarkdownItems(join(CLAUDE, "agents")))
+    globalItems.push(makeItem({ kind: "subagent", name, location: "global" }));
   for (const h of await readHooksFromSettings([join(CLAUDE, "settings.json")])) {
     globalItems.push(makeItem({ kind: "hook", name: nameHook(h), location: "global" }));
+    for (const p of await missingHookScripts(h, {}))
+      wiring.push({
+        issue: "hook-script",
+        from: nameHook(h),
+        fromKind: "hook",
+        where: "global",
+        detail: p,
+      });
   }
 
   // Plugin items (skills/commands/agents) for each install
@@ -964,11 +1258,25 @@ export async function collect(): Promise<CollectResult> {
       pluginStatusNote: info.statusNote,
       projectPath: inst.scope === "project" ? inst.projectPath : undefined,
     };
-    for (const name of sk) info.items.push(makeItem({ kind: "skill", name, location: loc, ...common }));
-    for (const name of cm) info.items.push(makeItem({ kind: "command", name, location: loc, ...common }));
-    for (const name of ag) info.items.push(makeItem({ kind: "subagent", name, location: loc, ...common }));
+    for (const name of sk)
+      info.items.push(makeItem({ kind: "skill", name, location: loc, ...common }));
+    for (const name of cm)
+      info.items.push(makeItem({ kind: "command", name, location: loc, ...common }));
+    for (const name of ag)
+      info.items.push(makeItem({ kind: "subagent", name, location: loc, ...common }));
     for (const h of await readHooksFromPlugin(inst.installPath)) {
       info.items.push(makeItem({ kind: "hook", name: nameHook(h), location: loc, ...common }));
+      for (const p of await missingHookScripts(h, {
+        pluginRoot: inst.installPath,
+        projectPath: inst.projectPath,
+      }))
+        wiring.push({
+          issue: "hook-script",
+          from: nameHook(h),
+          fromKind: "hook",
+          where: `plugin ${inst.name}`,
+          detail: p,
+        });
     }
   }
 
@@ -1016,11 +1324,25 @@ export async function collect(): Promise<CollectResult> {
     if (claudeDir === CLAUDE) continue;
     if (!(await pathExists(claudeDir))) continue;
     const items: Item[] = [];
-    for (const name of await listDir(join(claudeDir, "skills")))      items.push(makeItem({ kind: "skill",    name, location: "local", projectPath: p }));
-    for (const name of await listMarkdownItems(join(claudeDir, "commands"))) items.push(makeItem({ kind: "command",  name, location: "local", projectPath: p }));
-    for (const name of await listMarkdownItems(join(claudeDir, "agents")))   items.push(makeItem({ kind: "subagent", name, location: "local", projectPath: p }));
-    for (const h of await readHooksFromSettings([join(claudeDir, "settings.json"), join(claudeDir, "settings.local.json")])) {
+    for (const name of await listDir(join(claudeDir, "skills")))
+      items.push(makeItem({ kind: "skill", name, location: "local", projectPath: p }));
+    for (const name of await listMarkdownItems(join(claudeDir, "commands")))
+      items.push(makeItem({ kind: "command", name, location: "local", projectPath: p }));
+    for (const name of await listMarkdownItems(join(claudeDir, "agents")))
+      items.push(makeItem({ kind: "subagent", name, location: "local", projectPath: p }));
+    for (const h of await readHooksFromSettings([
+      join(claudeDir, "settings.json"),
+      join(claudeDir, "settings.local.json"),
+    ])) {
       items.push(makeItem({ kind: "hook", name: nameHook(h), location: "local", projectPath: p }));
+      for (const miss of await missingHookScripts(h, { projectPath: p }))
+        wiring.push({
+          issue: "hook-script",
+          from: nameHook(h),
+          fromKind: "hook",
+          where: tildePath(p),
+          detail: miss,
+        });
     }
     if (items.length) localItemsByPath.set(p, items);
   }
@@ -1041,17 +1363,27 @@ export async function collect(): Promise<CollectResult> {
   for (const [folder, cwd] of folderToCwdCache) cwdToFolder.set(cwd, folder);
 
   for (const p of candidates) {
-    if (!(await pathExists(p))) { droppedProjects++; continue; }
+    if (!(await pathExists(p))) {
+      droppedProjects++;
+      continue;
+    }
     const localItems = localItemsByPath.get(p) ?? [];
     const scopedPlugins = scopedByPath.get(p) ?? [];
     const projectMcps = projectMcpsByPath.get(p) ?? [];
     let activity = emptyBuckets();
     const pm = usage.perProject.get(p);
-    if (pm) for (const k of ["skill", "command", "subagent", "mcp"] as const) for (const b of pm[k].values()) activity = mergeBuckets(activity, b);
+    if (pm)
+      for (const k of ["skill", "command", "subagent", "mcp"] as const)
+        for (const b of pm[k].values()) activity = mergeBuckets(activity, b);
     const context = await scanContext(p, cwdToFolder.get(p));
     // Standing context is its own reason to exist: a project that only loads a
     // CLAUDE.md is not dormant, even with zero activity or servitors.
-    const dormant = activity.total === 0 && localItems.length === 0 && scopedPlugins.length === 0 && projectMcps.length === 0 && !context;
+    const dormant =
+      activity.total === 0 &&
+      localItems.length === 0 &&
+      scopedPlugins.length === 0 &&
+      projectMcps.length === 0 &&
+      !context;
     if (dormant) dormantProjects++;
     projects.push({
       path: p,
@@ -1078,10 +1410,15 @@ export async function collect(): Promise<CollectResult> {
   const regions = [...groups.entries()].map(([label, projects]) => {
     let activity = emptyBuckets();
     for (const p of projects) activity = mergeBuckets(activity, p.activity);
-    projects.sort((a, b) => (b.activity.total - a.activity.total) || ((b.activity.last ?? 0) - (a.activity.last ?? 0)) || a.path.localeCompare(b.path));
+    projects.sort(
+      (a, b) =>
+        b.activity.total - a.activity.total ||
+        (b.activity.last ?? 0) - (a.activity.last ?? 0) ||
+        a.path.localeCompare(b.path),
+    );
     return { label, projects, activity };
   });
-  regions.sort((a, b) => (b.activity.total - a.activity.total) || a.label.localeCompare(b.label));
+  regions.sort((a, b) => b.activity.total - a.activity.total || a.label.localeCompare(b.label));
 
   // Mark contested names. An invocation token resolves into:
   //   skill/command pool — name (lowercased)
@@ -1089,25 +1426,36 @@ export async function collect(): Promise<CollectResult> {
   //   mcp pool           — name (lowercased)
   // Contested = same lowercased name appears in 2+ distinct origins within its pool.
   function originKey(item: Item): string {
-    return [
-      item.location,
-      item.pluginId ?? "",
-      item.projectPath ?? "",
-    ].join("|");
+    return [item.location, item.pluginId ?? "", item.projectPath ?? ""].join("|");
   }
   // Human-readable "kind · place" so a contested chip can explain the clash.
   const tilde = (p?: string) => (p ? p.replace(HOME, "~") : "?");
   function originLabel(it: Item): string {
     let where: string;
     switch (it.location) {
-      case "global": where = "global"; break;
-      case "user-plugin": where = `plugin ${it.pluginName ?? "?"}`; break;
-      case "scoped-plugin": where = `plugin ${it.pluginName ?? "?"} @ ${tilde(it.projectPath)}`; break;
-      case "local": where = tilde(it.projectPath); break;
-      case "user-mcp": where = "user (~/.claude.json)"; break;
-      case "project-mcp": where = tilde(it.projectPath); break;
-      case "claude-ai-remote": where = "claude.ai"; break;
-      default: where = it.location;
+      case "global":
+        where = "global";
+        break;
+      case "user-plugin":
+        where = `plugin ${it.pluginName ?? "?"}`;
+        break;
+      case "scoped-plugin":
+        where = `plugin ${it.pluginName ?? "?"} @ ${tilde(it.projectPath)}`;
+        break;
+      case "local":
+        where = tilde(it.projectPath);
+        break;
+      case "user-mcp":
+        where = "user (~/.claude.json)";
+        break;
+      case "project-mcp":
+        where = tilde(it.projectPath);
+        break;
+      case "claude-ai-remote":
+        where = "claude.ai";
+        break;
+      default:
+        where = it.location;
     }
     return `${it.kind} · ${where}`;
   }
@@ -1140,10 +1488,12 @@ export async function collect(): Promise<CollectResult> {
     }
   }
 
-  // Declared relations: scrape each skill/command body for /slug and `slug`
-  // mentions that resolve to a known skill/command name. Targets that resolve to
+  // Declared relations: scrape each skill/command/subagent body for /slug and
+  // `slug` mentions that resolve to a known item name. Targets that resolve to
   // a contested name are flagged ambiguous (the edge can't pick one origin).
-  const linkable = allItems.filter((it) => it.kind === "skill" || it.kind === "command");
+  const linkable = allItems.filter(
+    (it) => it.kind === "skill" || it.kind === "command" || it.kind === "subagent",
+  );
   // Resolution respects scope: an item only "sees" targets that are actually
   // available where it runs. Global and user-plugin items are ambient (visible
   // everywhere); local and scoped-plugin items are visible only within their own
@@ -1155,7 +1505,8 @@ export async function collect(): Promise<CollectResult> {
     const n = it.name.toLowerCase();
     if (it.location === "global" || it.location === "user-plugin") ambientNames.add(n);
     else if ((it.location === "local" || it.location === "scoped-plugin") && it.projectPath) {
-      if (!localNamesByProject.has(it.projectPath)) localNamesByProject.set(it.projectPath, new Set());
+      if (!localNamesByProject.has(it.projectPath))
+        localNamesByProject.set(it.projectPath, new Set());
       localNamesByProject.get(it.projectPath)!.add(n);
     }
   }
@@ -1163,11 +1514,20 @@ export async function collect(): Promise<CollectResult> {
     const local = it.projectPath ? localNamesByProject.get(it.projectPath) : undefined;
     return local ? new Set([...ambientNames, ...local]) : ambientNames;
   }
-  const ambiguousNames = new Set(linkable.filter((it) => it.contested).map((it) => it.name.toLowerCase()));
+  const ambiguousNames = new Set(
+    linkable.filter((it) => it.contested).map((it) => it.name.toLowerCase()),
+  );
   // A target name's kind. When a name resolves to both a skill and a command it is
   // already contested (ambiguous) — pick one kind for colour, the "?" marks the doubt.
   const nameKind = new Map<string, Kind>();
-  for (const it of linkable) if (!nameKind.has(it.name.toLowerCase())) nameKind.set(it.name.toLowerCase(), it.kind);
+  for (const it of linkable)
+    if (!nameKind.has(it.name.toLowerCase())) nameKind.set(it.name.toLowerCase(), it.kind);
+  // Phantom detection checks against every known invokable name anywhere (not
+  // just scope-visible ones) — a real name in another project is out of scope,
+  // not frayed.
+  const allKnownNames = new Set(
+    allItems.filter((it) => it.kind !== "hook").map((it) => it.name.toLowerCase()),
+  );
   const relations: Relation[] = [];
   for (const it of linkable) {
     const path = bodyPathFor(it);
@@ -1175,16 +1535,77 @@ export async function collect(): Promise<CollectResult> {
     const body = await readFile(path, "utf8").catch(() => "");
     if (!body) continue;
     it.invocation = invocationFromFrontmatter(body);
+
+    // Frayed-line checks on the same body read
+    for (const bin of bashBinaries(body)) {
+      if (bin.includes("/")) {
+        const p = bin.startsWith("~/") ? join(HOME, bin.slice(2)) : bin;
+        if (p.startsWith("/") && !(await pathExists(p)))
+          wiring.push({
+            issue: "binary",
+            from: it.name,
+            fromKind: it.kind,
+            where: placeLabel(it),
+            detail: bin,
+          });
+      } else if (!(await binOnPath(bin))) {
+        wiring.push({
+          issue: "binary",
+          from: it.name,
+          fromKind: it.kind,
+          where: placeLabel(it),
+          detail: bin,
+        });
+      }
+    }
+    for (const spec of checkableImports(body)) {
+      if (!(await pathExists(resolveImport(spec, path))))
+        wiring.push({
+          issue: "import",
+          from: it.name,
+          fromKind: it.kind,
+          where: placeLabel(it),
+          detail: "@" + spec,
+        });
+    }
+    for (const slug of phantomRefs(body, allKnownNames, it.name.toLowerCase()))
+      wiring.push({
+        issue: "phantom",
+        from: it.name,
+        fromKind: it.kind,
+        where: placeLabel(it),
+        detail: "/" + slug,
+      });
+
     const refs = extractRefs(body, visibleNames(it), it.name.toLowerCase());
     if (!refs.length) continue;
     relations.push({
       from: it.name,
       fromKind: it.kind,
       fromLocation: it.location,
-      refs: refs.map((name) => ({ name, kind: nameKind.get(name) ?? "skill", ambiguous: ambiguousNames.has(name) })),
+      refs: refs.map((name) => ({
+        name,
+        kind: nameKind.get(name) ?? "skill",
+        ambiguous: ambiguousNames.has(name),
+      })),
     });
   }
-  relations.sort((a, b) => a.from.localeCompare(b.from) || a.fromLocation.localeCompare(b.fromLocation));
+  relations.sort(
+    (a, b) => a.from.localeCompare(b.from) || a.fromLocation.localeCompare(b.fromLocation),
+  );
+
+  const ISSUE_ORDER: Record<WiringIssue["issue"], number> = {
+    "hook-script": 0,
+    binary: 1,
+    import: 2,
+    phantom: 3,
+  };
+  wiring.sort(
+    (a, b) =>
+      ISSUE_ORDER[a.issue] - ISSUE_ORDER[b.issue] ||
+      a.from.localeCompare(b.from) ||
+      a.detail.localeCompare(b.detail),
+  );
 
   // Annotate items (by name) with their outgoing/incoming refs so each chip can
   // show it participates in the graph. allItems holds the live Item objects, so
@@ -1209,12 +1630,27 @@ export async function collect(): Promise<CollectResult> {
   }
 
   // Tally counts: unique items per kind across all locations
-  const uniqueByKind: Record<Kind, Set<string>> = { mcp: new Set(), skill: new Set(), command: new Set(), subagent: new Set(), hook: new Set() };
+  const uniqueByKind: Record<Kind, Set<string>> = {
+    mcp: new Set(),
+    skill: new Set(),
+    command: new Set(),
+    subagent: new Set(),
+    hook: new Set(),
+  };
   for (const it of allItems) uniqueByKind[it.kind].add(it.name.toLowerCase());
 
-  let inv7 = 0, inv30 = 0;
-  for (const m of [usage.global.skill, usage.global.command, usage.global.subagent, usage.global.mcp]) {
-    for (const b of m.values()) { inv7 += b.d7; inv30 += b.d30; }
+  let inv7 = 0,
+    inv30 = 0;
+  for (const m of [
+    usage.global.skill,
+    usage.global.command,
+    usage.global.subagent,
+    usage.global.mcp,
+  ]) {
+    for (const b of m.values()) {
+      inv7 += b.d7;
+      inv30 += b.d30;
+    }
   }
 
   const userPlugins = [...installInfo.values()]
@@ -1246,6 +1682,7 @@ export async function collect(): Promise<CollectResult> {
       dormant: dormantProjects,
     },
     relations,
+    wiring,
     generatedAt: Date.now(),
   };
 }

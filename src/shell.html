@@ -1,400 +1,553 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Map of my Servitors</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=IM+Fell+DW+Pica:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/atlas.css">
-</head>
-<body>
-
-<div class="page">
-
-  <!-- Ghosted antique-chart engraving in the top-right corner: a hemispheric
+  <head>
+    <meta charset="utf-8" />
+    <title>Map of my Servitors</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=IM+Fell+DW+Pica:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/atlas.css" />
+  </head>
+  <body>
+    <div class="page">
+      <!-- Ghosted antique-chart engraving in the top-right corner: a hemispheric
        graticule, wandering coastline contours, depth soundings and a rhumb
        compass. Purely illustrative — no real geography. -->
-  <div class="atlas-ghost" aria-hidden="true">
-    <svg viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg" fill="none"
-         stroke="#4a3318" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-      <!-- hemisphere frame -->
-      <circle cx="280" cy="280" r="250" stroke-width="1.6"/>
-      <circle cx="280" cy="280" r="242" stroke-width="0.7" opacity="0.7"/>
-      <!-- parallels -->
-      <g opacity="0.6">
-        <ellipse cx="280" cy="280" rx="250" ry="58"/>
-        <ellipse cx="280" cy="280" rx="250" ry="135"/>
-        <ellipse cx="280" cy="280" rx="250" ry="205"/>
-        <line x1="30" y1="280" x2="530" y2="280"/>
-      </g>
-      <!-- meridians -->
-      <g opacity="0.6">
-        <path d="M280 30 C 130 130 130 430 280 530"/>
-        <path d="M280 30 C 190 130 190 430 280 530"/>
-        <path d="M280 30 C 370 130 370 430 280 530"/>
-        <path d="M280 30 C 430 130 430 430 280 530"/>
-        <line x1="280" y1="30" x2="280" y2="530"/>
-      </g>
-      <!-- wandering coastline + nested elevation contours (procedurally
+      <div class="atlas-ghost" aria-hidden="true">
+        <svg
+          viewBox="0 0 560 560"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          stroke="#4a3318"
+          stroke-width="1.1"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <!-- hemisphere frame -->
+          <circle cx="280" cy="280" r="250" stroke-width="1.6" />
+          <circle cx="280" cy="280" r="242" stroke-width="0.7" opacity="0.7" />
+          <!-- parallels -->
+          <g opacity="0.6">
+            <ellipse cx="280" cy="280" rx="250" ry="58" />
+            <ellipse cx="280" cy="280" rx="250" ry="135" />
+            <ellipse cx="280" cy="280" rx="250" ry="205" />
+            <line x1="30" y1="280" x2="530" y2="280" />
+          </g>
+          <!-- meridians -->
+          <g opacity="0.6">
+            <path d="M280 30 C 130 130 130 430 280 530" />
+            <path d="M280 30 C 190 130 190 430 280 530" />
+            <path d="M280 30 C 370 130 370 430 280 530" />
+            <path d="M280 30 C 430 130 430 430 280 530" />
+            <line x1="280" y1="30" x2="280" y2="530" />
+          </g>
+          <!-- wandering coastline + nested elevation contours (procedurally
            crinkled — irregular high-frequency shoreline, not smooth blobs) -->
-      <g opacity="0.85">
-        <path d="M360.6 312.0 L360.9 317.1 L357.4 321.9 L352.3 326.2 L356.1 331.8 L350.6 335.6 L351.8 341.0 L345.9 344.2 L337.7 346.2 L336.7 350.6 L334.7 354.6 L335.1 360.0 L331.7 363.4 L330.9 368.6 L331.9 375.3 L329.7 380.1 L323.2 381.1 L320.4 385.5 L322.0 394.9 L315.6 395.9 L316.0 405.7 L309.0 405.7 L308.3 415.8 L299.9 413.0 L297.5 422.0 L291.7 424.3 L285.9 426.8 L279.6 428.0 L272.9 427.1 L267.0 429.5 L260.7 431.1 L254.4 431.5 L248.0 433.0 L241.8 428.4 L235.5 428.9 L229.9 424.5 L224.4 421.2 L218.3 421.1 L213.2 417.5 L209.9 409.9 L209.0 398.5 L205.6 394.5 L202.5 390.3 L201.2 383.9 L199.4 378.9 L197.2 375.1 L195.4 370.9 L195.1 365.7 L194.7 361.0 L193.8 357.2 L187.8 357.5 L188.3 352.8 L187.0 349.5 L184.7 346.9 L183.1 343.9 L186.4 338.8 L182.9 336.8 L179.4 334.6 L170.4 333.7 L174.2 329.0 L170.5 326.2 L164.7 323.4 L160.7 319.9 L157.8 316.1 L153.3 312.0 L149.7 307.6 L155.7 303.6 L145.8 298.0 L147.1 293.5 L150.2 289.5 L149.2 284.4 L145.7 278.3 L146.4 273.3 L146.9 268.0 L152.7 265.2 L156.4 261.5 L160.8 258.4 L166.1 256.1 L173.3 255.6 L174.7 250.9 L177.5 247.1 L180.5 243.5 L189.9 246.9 L193.1 243.9 L200.9 247.2 L205.7 247.1 L208.7 244.4 L211.7 241.4 L215.8 240.5 L223.5 249.1 L227.4 249.5 L229.7 244.9 L233.0 242.8 L237.0 243.5 L240.4 241.3 L244.3 243.6 L248.0 238.8 L251.9 239.8 L255.9 238.6 L260.6 234.0 L264.0 237.9 L270.5 229.4 L273.6 234.2 L279.3 231.6 L286.3 227.0 L293.8 223.0 L299.8 222.8 L306.4 222.4 L310.5 225.9 L320.7 221.8 L325.9 224.7 L334.8 223.9 L337.0 230.1 L344.2 231.7 L349.9 235.0 L359.2 236.1 L356.5 245.3 L361.3 249.5 L366.7 253.6 L371.8 258.1 L375.8 263.3 L371.6 271.3 L376.9 276.0 L371.4 283.6 L370.7 289.5 L375.2 294.6 L372.4 300.7 L365.2 306.7 Z"/>
-        <path d="M329.5 312.0 L329.1 315.7 L328.2 319.3 L323.7 322.3 L324.6 326.0 L322.0 329.1 L321.9 332.6 L319.0 335.4 L313.8 337.1 L311.8 339.7 L309.6 342.3 L311.9 347.3 L309.0 349.5 L307.1 352.3 L307.5 356.9 L306.8 361.1 L302.6 362.3 L300.4 365.2 L299.9 370.2 L296.6 372.3 L297.8 380.6 L291.0 377.9 L291.6 387.1 L284.5 383.0 L283.2 390.3 L278.8 391.1 L274.8 393.4 L271.1 396.7 L265.9 395.0 L261.3 394.6 L257.0 396.3 L252.7 399.5 L248.0 399.1 L243.5 397.1 L239.1 395.4 L235.0 392.8 L231.4 388.8 L227.1 388.8 L222.9 388.2 L220.5 382.8 L220.3 373.5 L217.2 371.9 L215.7 367.5 L214.6 363.2 L212.6 360.7 L210.7 358.2 L210.1 354.5 L210.5 350.1 L210.1 346.9 L209.4 344.2 L205.5 344.1 L204.6 341.6 L203.7 339.2 L202.0 337.4 L200.3 335.5 L204.6 330.9 L200.1 330.3 L198.8 328.2 L190.9 327.9 L195.8 324.0 L193.3 322.0 L189.5 320.0 L185.6 317.7 L183.1 314.9 L179.5 312.0 L175.8 308.7 L182.9 306.1 L173.6 301.8 L173.8 298.4 L178.4 296.0 L176.2 292.0 L175.5 288.1 L174.8 284.1 L174.0 279.8 L180.7 278.9 L180.4 274.7 L185.0 273.3 L187.8 270.9 L194.4 271.5 L195.0 267.8 L197.7 265.7 L199.2 262.5 L206.5 265.5 L208.0 262.4 L214.4 265.8 L217.6 265.4 L219.2 262.5 L221.6 260.6 L224.3 259.3 L230.0 265.8 L233.2 267.2 L234.8 263.6 L237.3 262.7 L240.2 263.7 L242.5 260.6 L245.4 263.2 L248.0 258.6 L250.8 259.0 L253.5 260.2 L257.0 255.9 L259.7 257.8 L263.9 253.7 L266.9 254.7 L270.1 255.0 L275.8 250.2 L281.3 247.3 L284.8 248.7 L289.9 247.7 L292.2 251.1 L300.8 246.5 L303.6 249.6 L309.6 249.5 L312.5 252.6 L318.6 253.1 L320.8 257.1 L329.2 256.6 L325.7 264.2 L328.1 267.9 L335.0 269.2 L336.6 273.5 L337.7 277.8 L338.0 282.4 L341.5 285.9 L338.5 291.1 L338.1 295.5 L338.3 299.7 L338.0 303.8 L332.3 308.2 Z" stroke-width="0.8" opacity="0.7"/>
-        <path d="M299.2 312.0 L300.7 314.4 L298.4 316.6 L296.4 318.6 L296.5 320.9 L296.0 323.1 L294.6 325.0 L292.2 326.5 L289.0 327.6 L289.1 329.9 L287.6 331.5 L287.2 333.6 L286.2 335.5 L286.6 338.3 L286.1 340.8 L285.0 342.9 L282.5 343.7 L281.8 346.3 L282.0 350.1 L278.7 350.1 L279.4 355.2 L276.4 355.7 L275.6 359.5 L272.2 359.1 L271.3 363.8 L268.1 363.7 L265.2 364.2 L262.9 366.6 L259.3 364.2 L256.7 366.0 L253.9 367.3 L250.9 366.7 L248.0 367.1 L245.2 364.8 L242.2 366.3 L239.7 363.5 L236.9 363.2 L234.6 361.4 L231.7 361.3 L230.5 357.0 L230.0 352.0 L228.3 350.3 L226.8 348.5 L226.7 344.7 L225.6 342.9 L224.3 341.4 L223.9 339.1 L224.1 336.3 L224.1 334.0 L222.9 332.9 L219.6 333.4 L220.5 330.8 L220.2 329.1 L218.6 328.2 L217.7 326.9 L219.7 324.3 L217.7 323.5 L216.8 322.3 L211.9 322.1 L213.9 319.9 L211.9 318.6 L210.3 317.1 L207.4 315.7 L207.4 313.8 L204.9 312.0 L202.5 309.9 L205.8 308.2 L201.4 305.6 L200.8 303.4 L204.0 301.9 L201.9 299.1 L202.0 296.9 L201.1 294.1 L201.4 291.7 L203.7 290.2 L206.9 289.3 L206.9 286.7 L209.7 285.9 L214.2 286.5 L214.2 283.8 L215.1 281.7 L216.3 279.8 L221.8 282.6 L223.3 281.3 L226.4 282.3 L228.4 281.9 L229.9 280.9 L231.0 278.9 L233.3 279.3 L236.8 283.1 L238.7 283.9 L239.8 281.8 L241.0 279.6 L243.0 280.7 L244.5 279.1 L246.3 279.9 L248.0 277.9 L249.8 278.3 L251.7 277.6 L253.7 276.4 L255.2 278.7 L258.5 273.4 L259.9 276.0 L262.6 274.4 L265.3 273.5 L269.6 270.0 L271.7 271.3 L274.2 271.7 L276.8 272.3 L281.2 270.9 L283.8 271.9 L287.6 271.8 L288.3 275.0 L292.2 275.1 L295.4 276.2 L298.3 277.7 L298.1 281.2 L300.1 283.3 L303.5 284.7 L305.5 287.0 L307.1 289.5 L304.0 293.6 L306.1 295.8 L306.1 298.6 L304.3 301.7 L306.6 304.0 L305.7 306.8 L302.9 309.5 Z" stroke-width="0.8" opacity="0.55"/>
-      </g>
-      <!-- a second smaller landmass with one elevation contour -->
-      <g opacity="0.8">
-        <path d="M452.5 176.0 L449.1 179.1 L445.4 181.6 L446.3 184.7 L445.2 187.4 L447.2 191.3 L442.7 192.5 L441.7 195.2 L444.1 200.4 L445.4 205.6 L443.9 209.0 L440.0 209.9 L440.4 216.0 L435.0 214.5 L433.3 218.4 L430.3 220.2 L427.2 222.0 L423.4 221.6 L420.4 223.7 L416.2 219.5 L413.3 222.4 L410.0 222.2 L406.7 222.5 L403.6 220.3 L400.5 219.8 L396.6 221.6 L392.3 223.3 L387.0 226.2 L382.3 226.5 L377.3 226.4 L370.7 227.7 L367.2 224.5 L360.9 223.9 L356.2 221.1 L350.6 218.5 L349.8 212.5 L347.6 207.6 L344.1 203.2 L348.8 195.8 L346.1 191.3 L351.8 185.2 L353.6 180.4 L353.8 176.0 L354.0 171.6 L355.5 167.4 L357.1 163.3 L360.9 160.1 L359.7 155.3 L363.3 152.4 L360.7 146.1 L360.4 140.5 L361.9 135.7 L362.6 129.9 L365.0 125.0 L365.9 117.9 L370.6 115.3 L373.6 109.8 L379.6 109.7 L384.4 107.5 L389.7 106.8 L396.1 111.9 L401.2 114.5 L405.7 115.2 L410.0 121.9 L413.8 122.9 L417.1 126.8 L420.4 128.0 L422.1 134.7 L424.9 136.2 L428.9 134.7 L429.6 140.3 L435.0 137.5 L435.6 142.3 L441.3 140.6 L444.6 142.3 L446.0 145.9 L447.8 148.9 L453.6 149.6 L453.4 154.0 L455.9 157.1 L455.3 161.3 L454.6 165.3 L451.1 169.5 L450.8 172.8 Z"/>
-        <path d="M434.9 176.0 L432.9 177.8 L431.7 179.4 L432.0 181.3 L431.2 182.9 L432.2 185.1 L429.6 185.9 L428.7 187.4 L430.5 190.7 L431.5 194.0 L430.1 195.6 L427.7 196.0 L428.5 200.3 L425.0 199.1 L423.8 201.1 L422.1 202.4 L420.2 203.3 L418.1 203.4 L416.2 204.3 L413.8 202.7 L412.0 203.5 L410.0 204.2 L408.0 203.5 L406.3 202.1 L404.4 201.8 L402.1 203.0 L399.4 204.4 L396.0 206.5 L393.7 205.6 L389.9 206.9 L386.4 207.1 L384.1 205.3 L380.3 205.0 L377.0 203.7 L374.1 201.7 L373.1 198.4 L371.9 195.2 L371.4 191.9 L373.9 187.7 L371.9 185.1 L375.2 181.5 L377.0 178.6 L377.0 176.0 L376.0 173.3 L377.5 170.9 L378.4 168.4 L380.6 166.5 L379.2 163.3 L381.7 161.7 L380.2 157.9 L380.5 154.9 L381.4 152.0 L382.1 148.8 L383.5 146.0 L383.0 140.4 L386.6 139.9 L388.5 136.9 L391.6 136.0 L394.8 135.2 L398.1 135.4 L401.6 137.2 L404.6 138.3 L407.4 139.4 L410.0 143.0 L412.3 143.9 L414.3 145.9 L416.1 147.8 L417.3 151.2 L419.0 151.9 L421.6 150.7 L422.1 154.1 L425.3 152.5 L425.4 155.7 L429.2 154.3 L431.2 155.3 L431.7 157.9 L433.0 159.5 L435.5 160.5 L436.1 162.8 L437.3 164.8 L437.5 167.1 L436.8 169.6 L435.0 172.0 L435.0 174.0 Z" stroke-width="0.8" opacity="0.65"/>
-      </g>
-      <!-- depth soundings -->
-      <g opacity="0.5" stroke-dasharray="1.5 7" stroke-width="1.4">
-        <path d="M120 430 C 200 470 360 470 450 420"/>
-        <path d="M95 360 C 130 470 360 510 470 400"/>
-      </g>
-      <!-- rhumb compass -->
-      <g opacity="0.55" transform="translate(420 410)">
-        <circle r="46" stroke-width="0.8"/>
-        <circle r="30" stroke-width="0.8"/>
-        <g stroke-width="0.7">
-          <line x1="-46" y1="0" x2="46" y2="0"/>
-          <line x1="0" y1="-46" x2="0" y2="46"/>
-          <line x1="-32" y1="-32" x2="32" y2="32"/>
-          <line x1="-32" y1="32" x2="32" y2="-32"/>
-        </g>
-        <path d="M0 -44 L 9 0 L 0 30 L -9 0 Z" stroke-width="0.8"/>
-        <path d="M-44 0 L 0 -9 L 30 0 L 0 9 Z" stroke-width="0.8"/>
-      </g>
-    </svg>
-  </div>
+          <g opacity="0.85">
+            <path
+              d="M360.6 312.0 L360.9 317.1 L357.4 321.9 L352.3 326.2 L356.1 331.8 L350.6 335.6 L351.8 341.0 L345.9 344.2 L337.7 346.2 L336.7 350.6 L334.7 354.6 L335.1 360.0 L331.7 363.4 L330.9 368.6 L331.9 375.3 L329.7 380.1 L323.2 381.1 L320.4 385.5 L322.0 394.9 L315.6 395.9 L316.0 405.7 L309.0 405.7 L308.3 415.8 L299.9 413.0 L297.5 422.0 L291.7 424.3 L285.9 426.8 L279.6 428.0 L272.9 427.1 L267.0 429.5 L260.7 431.1 L254.4 431.5 L248.0 433.0 L241.8 428.4 L235.5 428.9 L229.9 424.5 L224.4 421.2 L218.3 421.1 L213.2 417.5 L209.9 409.9 L209.0 398.5 L205.6 394.5 L202.5 390.3 L201.2 383.9 L199.4 378.9 L197.2 375.1 L195.4 370.9 L195.1 365.7 L194.7 361.0 L193.8 357.2 L187.8 357.5 L188.3 352.8 L187.0 349.5 L184.7 346.9 L183.1 343.9 L186.4 338.8 L182.9 336.8 L179.4 334.6 L170.4 333.7 L174.2 329.0 L170.5 326.2 L164.7 323.4 L160.7 319.9 L157.8 316.1 L153.3 312.0 L149.7 307.6 L155.7 303.6 L145.8 298.0 L147.1 293.5 L150.2 289.5 L149.2 284.4 L145.7 278.3 L146.4 273.3 L146.9 268.0 L152.7 265.2 L156.4 261.5 L160.8 258.4 L166.1 256.1 L173.3 255.6 L174.7 250.9 L177.5 247.1 L180.5 243.5 L189.9 246.9 L193.1 243.9 L200.9 247.2 L205.7 247.1 L208.7 244.4 L211.7 241.4 L215.8 240.5 L223.5 249.1 L227.4 249.5 L229.7 244.9 L233.0 242.8 L237.0 243.5 L240.4 241.3 L244.3 243.6 L248.0 238.8 L251.9 239.8 L255.9 238.6 L260.6 234.0 L264.0 237.9 L270.5 229.4 L273.6 234.2 L279.3 231.6 L286.3 227.0 L293.8 223.0 L299.8 222.8 L306.4 222.4 L310.5 225.9 L320.7 221.8 L325.9 224.7 L334.8 223.9 L337.0 230.1 L344.2 231.7 L349.9 235.0 L359.2 236.1 L356.5 245.3 L361.3 249.5 L366.7 253.6 L371.8 258.1 L375.8 263.3 L371.6 271.3 L376.9 276.0 L371.4 283.6 L370.7 289.5 L375.2 294.6 L372.4 300.7 L365.2 306.7 Z"
+            />
+            <path
+              d="M329.5 312.0 L329.1 315.7 L328.2 319.3 L323.7 322.3 L324.6 326.0 L322.0 329.1 L321.9 332.6 L319.0 335.4 L313.8 337.1 L311.8 339.7 L309.6 342.3 L311.9 347.3 L309.0 349.5 L307.1 352.3 L307.5 356.9 L306.8 361.1 L302.6 362.3 L300.4 365.2 L299.9 370.2 L296.6 372.3 L297.8 380.6 L291.0 377.9 L291.6 387.1 L284.5 383.0 L283.2 390.3 L278.8 391.1 L274.8 393.4 L271.1 396.7 L265.9 395.0 L261.3 394.6 L257.0 396.3 L252.7 399.5 L248.0 399.1 L243.5 397.1 L239.1 395.4 L235.0 392.8 L231.4 388.8 L227.1 388.8 L222.9 388.2 L220.5 382.8 L220.3 373.5 L217.2 371.9 L215.7 367.5 L214.6 363.2 L212.6 360.7 L210.7 358.2 L210.1 354.5 L210.5 350.1 L210.1 346.9 L209.4 344.2 L205.5 344.1 L204.6 341.6 L203.7 339.2 L202.0 337.4 L200.3 335.5 L204.6 330.9 L200.1 330.3 L198.8 328.2 L190.9 327.9 L195.8 324.0 L193.3 322.0 L189.5 320.0 L185.6 317.7 L183.1 314.9 L179.5 312.0 L175.8 308.7 L182.9 306.1 L173.6 301.8 L173.8 298.4 L178.4 296.0 L176.2 292.0 L175.5 288.1 L174.8 284.1 L174.0 279.8 L180.7 278.9 L180.4 274.7 L185.0 273.3 L187.8 270.9 L194.4 271.5 L195.0 267.8 L197.7 265.7 L199.2 262.5 L206.5 265.5 L208.0 262.4 L214.4 265.8 L217.6 265.4 L219.2 262.5 L221.6 260.6 L224.3 259.3 L230.0 265.8 L233.2 267.2 L234.8 263.6 L237.3 262.7 L240.2 263.7 L242.5 260.6 L245.4 263.2 L248.0 258.6 L250.8 259.0 L253.5 260.2 L257.0 255.9 L259.7 257.8 L263.9 253.7 L266.9 254.7 L270.1 255.0 L275.8 250.2 L281.3 247.3 L284.8 248.7 L289.9 247.7 L292.2 251.1 L300.8 246.5 L303.6 249.6 L309.6 249.5 L312.5 252.6 L318.6 253.1 L320.8 257.1 L329.2 256.6 L325.7 264.2 L328.1 267.9 L335.0 269.2 L336.6 273.5 L337.7 277.8 L338.0 282.4 L341.5 285.9 L338.5 291.1 L338.1 295.5 L338.3 299.7 L338.0 303.8 L332.3 308.2 Z"
+              stroke-width="0.8"
+              opacity="0.7"
+            />
+            <path
+              d="M299.2 312.0 L300.7 314.4 L298.4 316.6 L296.4 318.6 L296.5 320.9 L296.0 323.1 L294.6 325.0 L292.2 326.5 L289.0 327.6 L289.1 329.9 L287.6 331.5 L287.2 333.6 L286.2 335.5 L286.6 338.3 L286.1 340.8 L285.0 342.9 L282.5 343.7 L281.8 346.3 L282.0 350.1 L278.7 350.1 L279.4 355.2 L276.4 355.7 L275.6 359.5 L272.2 359.1 L271.3 363.8 L268.1 363.7 L265.2 364.2 L262.9 366.6 L259.3 364.2 L256.7 366.0 L253.9 367.3 L250.9 366.7 L248.0 367.1 L245.2 364.8 L242.2 366.3 L239.7 363.5 L236.9 363.2 L234.6 361.4 L231.7 361.3 L230.5 357.0 L230.0 352.0 L228.3 350.3 L226.8 348.5 L226.7 344.7 L225.6 342.9 L224.3 341.4 L223.9 339.1 L224.1 336.3 L224.1 334.0 L222.9 332.9 L219.6 333.4 L220.5 330.8 L220.2 329.1 L218.6 328.2 L217.7 326.9 L219.7 324.3 L217.7 323.5 L216.8 322.3 L211.9 322.1 L213.9 319.9 L211.9 318.6 L210.3 317.1 L207.4 315.7 L207.4 313.8 L204.9 312.0 L202.5 309.9 L205.8 308.2 L201.4 305.6 L200.8 303.4 L204.0 301.9 L201.9 299.1 L202.0 296.9 L201.1 294.1 L201.4 291.7 L203.7 290.2 L206.9 289.3 L206.9 286.7 L209.7 285.9 L214.2 286.5 L214.2 283.8 L215.1 281.7 L216.3 279.8 L221.8 282.6 L223.3 281.3 L226.4 282.3 L228.4 281.9 L229.9 280.9 L231.0 278.9 L233.3 279.3 L236.8 283.1 L238.7 283.9 L239.8 281.8 L241.0 279.6 L243.0 280.7 L244.5 279.1 L246.3 279.9 L248.0 277.9 L249.8 278.3 L251.7 277.6 L253.7 276.4 L255.2 278.7 L258.5 273.4 L259.9 276.0 L262.6 274.4 L265.3 273.5 L269.6 270.0 L271.7 271.3 L274.2 271.7 L276.8 272.3 L281.2 270.9 L283.8 271.9 L287.6 271.8 L288.3 275.0 L292.2 275.1 L295.4 276.2 L298.3 277.7 L298.1 281.2 L300.1 283.3 L303.5 284.7 L305.5 287.0 L307.1 289.5 L304.0 293.6 L306.1 295.8 L306.1 298.6 L304.3 301.7 L306.6 304.0 L305.7 306.8 L302.9 309.5 Z"
+              stroke-width="0.8"
+              opacity="0.55"
+            />
+          </g>
+          <!-- a second smaller landmass with one elevation contour -->
+          <g opacity="0.8">
+            <path
+              d="M452.5 176.0 L449.1 179.1 L445.4 181.6 L446.3 184.7 L445.2 187.4 L447.2 191.3 L442.7 192.5 L441.7 195.2 L444.1 200.4 L445.4 205.6 L443.9 209.0 L440.0 209.9 L440.4 216.0 L435.0 214.5 L433.3 218.4 L430.3 220.2 L427.2 222.0 L423.4 221.6 L420.4 223.7 L416.2 219.5 L413.3 222.4 L410.0 222.2 L406.7 222.5 L403.6 220.3 L400.5 219.8 L396.6 221.6 L392.3 223.3 L387.0 226.2 L382.3 226.5 L377.3 226.4 L370.7 227.7 L367.2 224.5 L360.9 223.9 L356.2 221.1 L350.6 218.5 L349.8 212.5 L347.6 207.6 L344.1 203.2 L348.8 195.8 L346.1 191.3 L351.8 185.2 L353.6 180.4 L353.8 176.0 L354.0 171.6 L355.5 167.4 L357.1 163.3 L360.9 160.1 L359.7 155.3 L363.3 152.4 L360.7 146.1 L360.4 140.5 L361.9 135.7 L362.6 129.9 L365.0 125.0 L365.9 117.9 L370.6 115.3 L373.6 109.8 L379.6 109.7 L384.4 107.5 L389.7 106.8 L396.1 111.9 L401.2 114.5 L405.7 115.2 L410.0 121.9 L413.8 122.9 L417.1 126.8 L420.4 128.0 L422.1 134.7 L424.9 136.2 L428.9 134.7 L429.6 140.3 L435.0 137.5 L435.6 142.3 L441.3 140.6 L444.6 142.3 L446.0 145.9 L447.8 148.9 L453.6 149.6 L453.4 154.0 L455.9 157.1 L455.3 161.3 L454.6 165.3 L451.1 169.5 L450.8 172.8 Z"
+            />
+            <path
+              d="M434.9 176.0 L432.9 177.8 L431.7 179.4 L432.0 181.3 L431.2 182.9 L432.2 185.1 L429.6 185.9 L428.7 187.4 L430.5 190.7 L431.5 194.0 L430.1 195.6 L427.7 196.0 L428.5 200.3 L425.0 199.1 L423.8 201.1 L422.1 202.4 L420.2 203.3 L418.1 203.4 L416.2 204.3 L413.8 202.7 L412.0 203.5 L410.0 204.2 L408.0 203.5 L406.3 202.1 L404.4 201.8 L402.1 203.0 L399.4 204.4 L396.0 206.5 L393.7 205.6 L389.9 206.9 L386.4 207.1 L384.1 205.3 L380.3 205.0 L377.0 203.7 L374.1 201.7 L373.1 198.4 L371.9 195.2 L371.4 191.9 L373.9 187.7 L371.9 185.1 L375.2 181.5 L377.0 178.6 L377.0 176.0 L376.0 173.3 L377.5 170.9 L378.4 168.4 L380.6 166.5 L379.2 163.3 L381.7 161.7 L380.2 157.9 L380.5 154.9 L381.4 152.0 L382.1 148.8 L383.5 146.0 L383.0 140.4 L386.6 139.9 L388.5 136.9 L391.6 136.0 L394.8 135.2 L398.1 135.4 L401.6 137.2 L404.6 138.3 L407.4 139.4 L410.0 143.0 L412.3 143.9 L414.3 145.9 L416.1 147.8 L417.3 151.2 L419.0 151.9 L421.6 150.7 L422.1 154.1 L425.3 152.5 L425.4 155.7 L429.2 154.3 L431.2 155.3 L431.7 157.9 L433.0 159.5 L435.5 160.5 L436.1 162.8 L437.3 164.8 L437.5 167.1 L436.8 169.6 L435.0 172.0 L435.0 174.0 Z"
+              stroke-width="0.8"
+              opacity="0.65"
+            />
+          </g>
+          <!-- depth soundings -->
+          <g opacity="0.5" stroke-dasharray="1.5 7" stroke-width="1.4">
+            <path d="M120 430 C 200 470 360 470 450 420" />
+            <path d="M95 360 C 130 470 360 510 470 400" />
+          </g>
+          <!-- rhumb compass -->
+          <g opacity="0.55" transform="translate(420 410)">
+            <circle r="46" stroke-width="0.8" />
+            <circle r="30" stroke-width="0.8" />
+            <g stroke-width="0.7">
+              <line x1="-46" y1="0" x2="46" y2="0" />
+              <line x1="0" y1="-46" x2="0" y2="46" />
+              <line x1="-32" y1="-32" x2="32" y2="32" />
+              <line x1="-32" y1="32" x2="32" y2="-32" />
+            </g>
+            <path d="M0 -44 L 9 0 L 0 30 L -9 0 Z" stroke-width="0.8" />
+            <path d="M-44 0 L 0 -9 L 30 0 L 0 9 Z" stroke-width="0.8" />
+          </g>
+        </svg>
+      </div>
 
-  <header class="cartouche">
-    <div class="eyebrow">Terra Cognita · Chartæ Servorum</div>
-    <h1 class="title">Map of my <em>Servitors</em></h1>
-    <p class="subtitle" id="subtitle">
-      A cartographer's snapshot of skills, commands, subagents, and Model Context Protocol servers
-      charted across global, plugin, and project locations. Drawn <span id="date-stamp">today</span>.
-    </p>
-    <p class="astro-hint">
-      Take a bearing with the <button type="button" id="astro-open">Astrolabe</button> —
-      press <kbd>Ctrl</kbd>+<kbd>K</kbd> to sight any servitor, project, or plate — one sheet of
-      this atlas — and sail the page to it.
-    </p>
-    <div class="rule-orn" aria-hidden="true">
-      <span class="line"></span><span class="diamond"></span>
-      <span class="fleur">❦</span>
-      <span class="diamond"></span><span class="line"></span>
+      <header class="cartouche">
+        <div class="eyebrow">Terra Cognita · Chartæ Servorum</div>
+        <h1 class="title">Map of my <em>Servitors</em></h1>
+        <p class="subtitle" id="subtitle">
+          A cartographer's snapshot of skills, commands, subagents, and Model Context Protocol
+          servers charted across global, plugin, and project locations. Drawn
+          <span id="date-stamp">today</span>.
+        </p>
+        <p class="astro-hint">
+          Take a bearing with the <button type="button" id="astro-open">Astrolabe</button> — press
+          <kbd>Ctrl</kbd>+<kbd>K</kbd> to sight any servitor, project, or plate — one sheet of this
+          atlas — and sail the page to it.
+        </p>
+        <div class="rule-orn" aria-hidden="true">
+          <span class="line"></span><span class="diamond"></span>
+          <span class="fleur">❦</span>
+          <span class="diamond"></span><span class="line"></span>
+        </div>
+      </header>
+
+      <div id="atlas" class="atlas atlas-loading">
+        <div class="loading-overlay" role="status">
+          <div class="loading-mark" aria-hidden="true">❦</div>
+          <div class="loading-text">Surveying the territory…</div>
+        </div>
+      </div>
+
+      <footer class="colophon">
+        <span>claude-code-map · live</span>
+        <em>Hic svnt servitores. — Here be servers.</em>
+        <span>Astrolabe · Ctrl+K</span>
+        <span id="colophon-date">—</span>
+      </footer>
     </div>
-  </header>
 
-  <div id="atlas" class="atlas atlas-loading">
-    <div class="loading-overlay" role="status">
-      <div class="loading-mark" aria-hidden="true">❦</div>
-      <div class="loading-text">Surveying the territory…</div>
-    </div>
-  </div>
-
-  <footer class="colophon">
-    <span>claude-code-map · live</span>
-    <em>Hic svnt servitores. — Here be servers.</em>
-    <span>Astrolabe · Ctrl+K</span>
-    <span id="colophon-date">—</span>
-  </footer>
-</div>
-
-<script>
-  (function () {
-    var fmt = new Intl.DateTimeFormat(undefined, { year: "numeric", month: "long", day: "numeric" });
-    var now = new Date();
-    var stamp = document.getElementById("date-stamp");
-    if (stamp) stamp.textContent = "the " + fmt.format(now);
-    var col = document.getElementById("colophon-date");
-    if (col) col.textContent = fmt.format(now);
-  })();
-
-  (async function () {
-    var atlas = document.getElementById("atlas");
-    try {
-      var res = await fetch("/atlas.html", { cache: "no-store" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      var html = await res.text();
-      atlas.classList.remove("atlas-loading");
-      atlas.innerHTML = html;
-    } catch (e) {
-      atlas.classList.remove("atlas-loading");
-      atlas.innerHTML = '<div class="atlas-error">Survey failed: ' + String(e).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }) + "</div>";
-    }
-  })();
-</script>
-
-<script>
-  // Chip detail popover: click (or Enter/Space) a chip to open a readable card
-  // with its usage and declared references; reference names are buttons that
-  // scroll to and flash the matching chip(s). Delegated, so it covers chips
-  // injected by the runtime fetch above as well as the inlined --out build.
-  (function () {
-    var pop = null, anchor = null;
-
-    function close() {
-      if (pop) { pop.remove(); pop = null; }
-      if (anchor) { anchor.classList.remove("sel"); anchor = null; }
-    }
-
-    function flash(name) {
-      var hits = Array.prototype.filter.call(
-        document.querySelectorAll(".chip"),
-        function (c) { return c.dataset.name === name; }
-      );
-      if (!hits.length) return;
-      hits[0].scrollIntoView({ behavior: "smooth", block: "center" });
-      hits.forEach(function (c) {
-        c.classList.add("flash");
-        setTimeout(function () { c.classList.remove("flash"); }, 1500);
-      });
-    }
-
-    function linkRow(label, csv) {
-      var names = (csv || "").split(",").filter(Boolean);
-      if (!names.length) return "";
-      var links = names.map(function (n) {
-        return '<button type="button" class="pop-link" data-target="' + n + '">' + n + "</button>";
-      }).join("");
-      return '<div class="pop-sec"><span class="pop-lbl">' + label + '</span><span class="pop-links">' + links + "</span></div>";
-    }
-
-    function open(chip) {
-      close();
-      var d = chip.dataset;
-      pop = document.createElement("div");
-      pop.className = "chip-pop";
-      var linkable = d.kind === "skill" || d.kind === "command";
-      pop.innerHTML =
-        '<div class="pop-head"><span class="pop-name k-' + d.kind + '">' + (d.label || "") + "</span>" +
-          '<span class="pop-kind">' + d.kind + (d.contested ? " · contested" : "") + (d.loc ? " · " + d.loc : "") + "</span></div>" +
-        (d.inv ? '<div class="pop-meta pop-inv">' + d.inv + "</div>" : "") +
-        (d.extra ? '<div class="pop-meta">' + d.extra + "</div>" : "") +
-        (d.usage ? '<div class="pop-meta">' + d.usage + "</div>" : "") +
-        (d.contestedWith ? '<div class="pop-meta pop-contested">name also at — ' + d.contestedWith + "</div>" : "") +
-        linkRow("depends on", d.out) + linkRow("used by", d.in) +
-        (linkable && !d.out && !d.in ? '<div class="pop-none">no declared references</div>' : "");
-      document.body.appendChild(pop);
-
-      var r = chip.getBoundingClientRect();
-      var top = window.scrollY + r.bottom + 6;
-      var left = window.scrollX + r.left;
-      var maxLeft = window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 12;
-      if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
-      pop.style.top = top + "px";
-      pop.style.left = left + "px";
-
-      anchor = chip;
-      chip.classList.add("sel");
-    }
-
-    document.addEventListener("click", function (e) {
-      var link = e.target.closest(".pop-link");
-      if (link) { flash(link.dataset.target); return; }
-      var chip = e.target.closest(".chip");
-      if (chip) { e.preventDefault(); open(chip); return; }
-      if (pop && !e.target.closest(".chip-pop")) close();
-    });
-
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") { close(); return; }
-      if ((e.key === "Enter" || e.key === " ") && e.target.classList && e.target.classList.contains("chip")) {
-        e.preventDefault();
-        open(e.target);
-      }
-    });
-  })();
-</script>
-
-<script>
-  // ── The Astrolabe ──────────────────────────────────────────────────────
-  // Ctrl+K opens a sighting instrument: a modal with one input and a live
-  // list of every charted thing — servitors (chips), projects, regions and
-  // plates. Typing narrows by subsequence match; Enter takes the bearing,
-  // scrolling the target into view, flashing it and moving focus there.
-  // The index is built from the DOM on first open, so it works for both the
-  // live fetch and the inlined --out build.
-  (function () {
-    var scrim = null, input = null, list = null, rows = [], sel = 0, index = null;
-
-    // ---- index ----------------------------------------------------------
-    function collect() {
-      var out = [];
-      document.querySelectorAll("#atlas .chip").forEach(function (el) {
-        // Legend samples inside the compass plate are decorations, not servitors.
-        if (el.closest(".compass-legend")) return;
-        // Local servitors repeat across projects — qualify them with the card's path.
-        var card = el.closest(".proj-card");
-        var path = card && card.querySelector(".proj-path");
-        var loc = el.dataset.loc || "";
-        out.push({
-          el: el, name: el.dataset.label || el.textContent.trim(), kind: el.dataset.kind || "servitor",
-          where: path ? loc + " · " + path.textContent.trim() : loc
+    <script>
+      (function () {
+        var fmt = new Intl.DateTimeFormat(undefined, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
-      });
-      document.querySelectorAll("#atlas .proj-card").forEach(function (el) {
-        var p = el.querySelector(".proj-path");
-        if (!p) return;
-        var region = el.closest(".region");
-        var h = region && region.querySelector("h2");
-        out.push({ el: el, name: p.textContent.trim(), kind: "project", where: h ? h.firstChild.textContent.trim() : "" });
-      });
-      document.querySelectorAll("#atlas .region > h2").forEach(function (el) {
-        out.push({ el: el.parentNode, name: el.firstChild.textContent.trim(), kind: "region", where: "" });
-      });
-      document.querySelectorAll("#atlas .plate-title").forEach(function (el) {
-        out.push({ el: el.parentNode, name: el.firstChild.textContent.trim(), kind: "plate", where: "" });
-      });
-      return out;
-    }
+        var now = new Date();
+        var stamp = document.getElementById("date-stamp");
+        if (stamp) stamp.textContent = "the " + fmt.format(now);
+        var col = document.getElementById("colophon-date");
+        if (col) col.textContent = fmt.format(now);
+      })();
 
-    // ---- matching -------------------------------------------------------
-    // Subsequence match over the name; returns {score, marks} or null.
-    // Contiguous runs and start-of-name/word hits score higher.
-    function match(name, q) {
-      if (!q) return { score: 0, marks: [] };
-      var lname = name.toLowerCase(), marks = [], score = 0, i = 0, run = 0;
-      for (var k = 0; k < q.length; k++) {
-        var at = lname.indexOf(q[k], i);
-        if (at < 0) return null;
-        run = at === i && k > 0 ? run + 1 : 0;
-        score += 10 + run * 6;
-        if (at === 0) score += 25;
-        else if (/[^a-z0-9]/.test(lname[at - 1])) score += 12;
-        marks.push(at);
-        i = at + 1;
-      }
-      return { score: score - lname.length * 0.2, marks: marks };
-    }
+      (async function () {
+        var atlas = document.getElementById("atlas");
+        try {
+          var res = await fetch("/atlas.html", { cache: "no-store" });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          var html = await res.text();
+          atlas.classList.remove("atlas-loading");
+          atlas.innerHTML = html;
+        } catch (e) {
+          atlas.classList.remove("atlas-loading");
+          atlas.innerHTML =
+            '<div class="atlas-error">Survey failed: ' +
+            String(e).replace(/[&<>]/g, function (c) {
+              return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+            }) +
+            "</div>";
+        }
+      })();
+    </script>
 
-    var KIND_RANK = { skill: 0, command: 0, subagent: 0, mcp: 1, hook: 1, project: 2, region: 3, plate: 3 };
+    <script>
+      // Chip detail popover: click (or Enter/Space) a chip to open a readable card
+      // with its usage and declared references; reference names are buttons that
+      // scroll to and flash the matching chip(s). Delegated, so it covers chips
+      // injected by the runtime fetch above as well as the inlined --out build.
+      (function () {
+        var pop = null,
+          anchor = null;
 
-    function search(q) {
-      var hits = [];
-      index.forEach(function (it) {
-        var m = match(it.name, q);
-        if (!m && q) m = match(it.where, q) ? { score: -60, marks: [] } : null;
-        if (m) hits.push({ it: it, score: m.score, marks: m.marks });
-      });
-      hits.sort(function (a, b) {
-        if (b.score !== a.score) return b.score - a.score;
-        var ka = KIND_RANK[a.it.kind] ?? 4, kb = KIND_RANK[b.it.kind] ?? 4;
-        if (ka !== kb) return ka - kb;
-        return a.it.name.localeCompare(b.it.name);
-      });
-      return hits.slice(0, 60);
-    }
+        function close() {
+          if (pop) {
+            pop.remove();
+            pop = null;
+          }
+          if (anchor) {
+            anchor.classList.remove("sel");
+            anchor = null;
+          }
+        }
 
-    // ---- rendering ------------------------------------------------------
-    function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+        function flash(name) {
+          var hits = Array.prototype.filter.call(document.querySelectorAll(".chip"), function (c) {
+            return c.dataset.name === name;
+          });
+          if (!hits.length) return;
+          hits[0].scrollIntoView({ behavior: "smooth", block: "center" });
+          hits.forEach(function (c) {
+            c.classList.add("flash");
+            setTimeout(function () {
+              c.classList.remove("flash");
+            }, 1500);
+          });
+        }
 
-    function highlight(name, marks) {
-      if (!marks.length) return esc(name);
-      var out = "", prev = 0;
-      marks.forEach(function (at) {
-        out += esc(name.slice(prev, at)) + "<b>" + esc(name[at]) + "</b>";
-        prev = at + 1;
-      });
-      return out + esc(name.slice(prev));
-    }
+        function linkRow(label, csv) {
+          var names = (csv || "").split(",").filter(Boolean);
+          if (!names.length) return "";
+          var links = names
+            .map(function (n) {
+              return (
+                '<button type="button" class="pop-link" data-target="' + n + '">' + n + "</button>"
+              );
+            })
+            .join("");
+          return (
+            '<div class="pop-sec"><span class="pop-lbl">' +
+            label +
+            '</span><span class="pop-links">' +
+            links +
+            "</span></div>"
+          );
+        }
 
-    function draw() {
-      var q = input.value.trim().toLowerCase();
-      rows = search(q);
-      sel = 0;
-      if (!rows.length) {
-        list.innerHTML = '<li class="astro-empty">No such landmark on this chart.</li>';
-        return;
-      }
-      list.innerHTML = rows.map(function (h, i) {
-        return '<li class="astro-row" role="option" data-i="' + i + '" aria-selected="' + (i === 0) + '">' +
-          '<span class="astro-name k-' + h.it.kind + '">' + highlight(h.it.name, h.marks) + "</span>" +
-          '<span class="astro-kind">' + esc(h.it.kind) + "</span>" +
-          (h.it.where ? '<span class="astro-where">' + esc(h.it.where) + "</span>" : "") + "</li>";
-      }).join("");
-    }
+        function open(chip) {
+          close();
+          var d = chip.dataset;
+          pop = document.createElement("div");
+          pop.className = "chip-pop";
+          var linkable = d.kind === "skill" || d.kind === "command";
+          pop.innerHTML =
+            '<div class="pop-head"><span class="pop-name k-' +
+            d.kind +
+            '">' +
+            (d.label || "") +
+            "</span>" +
+            '<span class="pop-kind">' +
+            d.kind +
+            (d.contested ? " · contested" : "") +
+            (d.loc ? " · " + d.loc : "") +
+            "</span></div>" +
+            (d.inv ? '<div class="pop-meta pop-inv">' + d.inv + "</div>" : "") +
+            (d.extra ? '<div class="pop-meta">' + d.extra + "</div>" : "") +
+            (d.usage ? '<div class="pop-meta">' + d.usage + "</div>" : "") +
+            (d.contestedWith
+              ? '<div class="pop-meta pop-contested">name also at — ' + d.contestedWith + "</div>"
+              : "") +
+            linkRow("depends on", d.out) +
+            linkRow("used by", d.in) +
+            (linkable && !d.out && !d.in
+              ? '<div class="pop-none">no declared references</div>'
+              : "");
+          document.body.appendChild(pop);
 
-    function move(delta) {
-      if (!rows.length) return;
-      var items = list.querySelectorAll(".astro-row");
-      items[sel].setAttribute("aria-selected", "false");
-      sel = (sel + delta + rows.length) % rows.length;
-      items[sel].setAttribute("aria-selected", "true");
-      items[sel].scrollIntoView({ block: "nearest" });
-    }
+          var r = chip.getBoundingClientRect();
+          var top = window.scrollY + r.bottom + 6;
+          var left = window.scrollX + r.left;
+          var maxLeft =
+            window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 12;
+          if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
+          pop.style.top = top + "px";
+          pop.style.left = left + "px";
 
-    // ---- taking the bearing ---------------------------------------------
-    function sail(hit) {
-      var el = hit.it.el;
-      close();
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      var chip = el.classList.contains("chip");
-      el.classList.add(chip ? "flash" : "astro-flash");
-      setTimeout(function () { el.classList.remove(chip ? "flash" : "astro-flash"); }, 1600);
-      if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
-      el.focus({ preventScroll: true });
-    }
+          anchor = chip;
+          chip.classList.add("sel");
+        }
 
-    // ---- open / close ----------------------------------------------------
-    function close() {
-      if (!scrim) return;
-      scrim.remove();
-      scrim = input = list = null;
-      rows = [];
-    }
+        document.addEventListener("click", function (e) {
+          var link = e.target.closest(".pop-link");
+          if (link) {
+            flash(link.dataset.target);
+            return;
+          }
+          var chip = e.target.closest(".chip");
+          if (chip) {
+            e.preventDefault();
+            open(chip);
+            return;
+          }
+          if (pop && !e.target.closest(".chip-pop")) close();
+        });
 
-    function open() {
-      if (scrim) { input.select(); return; }
-      index = collect();
-      scrim = document.createElement("div");
-      scrim.className = "astro-scrim";
-      scrim.innerHTML =
-        '<div class="astro" role="dialog" aria-modal="true" aria-label="Astrolabe">' +
-          '<div class="astro-head">' +
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") {
+            close();
+            return;
+          }
+          if (
+            (e.key === "Enter" || e.key === " ") &&
+            e.target.classList &&
+            e.target.classList.contains("chip")
+          ) {
+            e.preventDefault();
+            open(e.target);
+          }
+        });
+      })();
+    </script>
+
+    <script>
+      // ── The Astrolabe ──────────────────────────────────────────────────────
+      // Ctrl+K opens a sighting instrument: a modal with one input and a live
+      // list of every charted thing — servitors (chips), projects, regions and
+      // plates. Typing narrows by subsequence match; Enter takes the bearing,
+      // scrolling the target into view, flashing it and moving focus there.
+      // The index is built from the DOM on first open, so it works for both the
+      // live fetch and the inlined --out build.
+      (function () {
+        var scrim = null,
+          input = null,
+          list = null,
+          rows = [],
+          sel = 0,
+          index = null;
+
+        // ---- index ----------------------------------------------------------
+        function collect() {
+          var out = [];
+          document.querySelectorAll("#atlas .chip").forEach(function (el) {
+            // Legend samples inside the compass plate are decorations, not servitors.
+            if (el.closest(".compass-legend")) return;
+            // Local servitors repeat across projects — qualify them with the card's path.
+            var card = el.closest(".proj-card");
+            var path = card && card.querySelector(".proj-path");
+            var loc = el.dataset.loc || "";
+            out.push({
+              el: el,
+              name: el.dataset.label || el.textContent.trim(),
+              kind: el.dataset.kind || "servitor",
+              where: path ? loc + " · " + path.textContent.trim() : loc,
+            });
+          });
+          document.querySelectorAll("#atlas .proj-card").forEach(function (el) {
+            var p = el.querySelector(".proj-path");
+            if (!p) return;
+            var region = el.closest(".region");
+            var h = region && region.querySelector("h2");
+            out.push({
+              el: el,
+              name: p.textContent.trim(),
+              kind: "project",
+              where: h ? h.firstChild.textContent.trim() : "",
+            });
+          });
+          document.querySelectorAll("#atlas .region > h2").forEach(function (el) {
+            out.push({
+              el: el.parentNode,
+              name: el.firstChild.textContent.trim(),
+              kind: "region",
+              where: "",
+            });
+          });
+          document.querySelectorAll("#atlas .plate-title").forEach(function (el) {
+            out.push({
+              el: el.parentNode,
+              name: el.firstChild.textContent.trim(),
+              kind: "plate",
+              where: "",
+            });
+          });
+          return out;
+        }
+
+        // ---- matching -------------------------------------------------------
+        // Subsequence match over the name; returns {score, marks} or null.
+        // Contiguous runs and start-of-name/word hits score higher.
+        function match(name, q) {
+          if (!q) return { score: 0, marks: [] };
+          var lname = name.toLowerCase(),
+            marks = [],
+            score = 0,
+            i = 0,
+            run = 0;
+          for (var k = 0; k < q.length; k++) {
+            var at = lname.indexOf(q[k], i);
+            if (at < 0) return null;
+            run = at === i && k > 0 ? run + 1 : 0;
+            score += 10 + run * 6;
+            if (at === 0) score += 25;
+            else if (/[^a-z0-9]/.test(lname[at - 1])) score += 12;
+            marks.push(at);
+            i = at + 1;
+          }
+          return { score: score - lname.length * 0.2, marks: marks };
+        }
+
+        var KIND_RANK = {
+          skill: 0,
+          command: 0,
+          subagent: 0,
+          mcp: 1,
+          hook: 1,
+          project: 2,
+          region: 3,
+          plate: 3,
+        };
+
+        function search(q) {
+          var hits = [];
+          index.forEach(function (it) {
+            var m = match(it.name, q);
+            if (!m && q) m = match(it.where, q) ? { score: -60, marks: [] } : null;
+            if (m) hits.push({ it: it, score: m.score, marks: m.marks });
+          });
+          hits.sort(function (a, b) {
+            if (b.score !== a.score) return b.score - a.score;
+            var ka = KIND_RANK[a.it.kind] ?? 4,
+              kb = KIND_RANK[b.it.kind] ?? 4;
+            if (ka !== kb) return ka - kb;
+            return a.it.name.localeCompare(b.it.name);
+          });
+          return hits.slice(0, 60);
+        }
+
+        // ---- rendering ------------------------------------------------------
+        function esc(s) {
+          return String(s).replace(/[&<>]/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+          });
+        }
+
+        function highlight(name, marks) {
+          if (!marks.length) return esc(name);
+          var out = "",
+            prev = 0;
+          marks.forEach(function (at) {
+            out += esc(name.slice(prev, at)) + "<b>" + esc(name[at]) + "</b>";
+            prev = at + 1;
+          });
+          return out + esc(name.slice(prev));
+        }
+
+        function draw() {
+          var q = input.value.trim().toLowerCase();
+          rows = search(q);
+          sel = 0;
+          if (!rows.length) {
+            list.innerHTML = '<li class="astro-empty">No such landmark on this chart.</li>';
+            return;
+          }
+          list.innerHTML = rows
+            .map(function (h, i) {
+              return (
+                '<li class="astro-row" role="option" data-i="' +
+                i +
+                '" aria-selected="' +
+                (i === 0) +
+                '">' +
+                '<span class="astro-name k-' +
+                h.it.kind +
+                '">' +
+                highlight(h.it.name, h.marks) +
+                "</span>" +
+                '<span class="astro-kind">' +
+                esc(h.it.kind) +
+                "</span>" +
+                (h.it.where ? '<span class="astro-where">' + esc(h.it.where) + "</span>" : "") +
+                "</li>"
+              );
+            })
+            .join("");
+        }
+
+        function move(delta) {
+          if (!rows.length) return;
+          var items = list.querySelectorAll(".astro-row");
+          items[sel].setAttribute("aria-selected", "false");
+          sel = (sel + delta + rows.length) % rows.length;
+          items[sel].setAttribute("aria-selected", "true");
+          items[sel].scrollIntoView({ block: "nearest" });
+        }
+
+        // ---- taking the bearing ---------------------------------------------
+        function sail(hit) {
+          var el = hit.it.el;
+          close();
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          var chip = el.classList.contains("chip");
+          el.classList.add(chip ? "flash" : "astro-flash");
+          setTimeout(function () {
+            el.classList.remove(chip ? "flash" : "astro-flash");
+          }, 1600);
+          if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+          el.focus({ preventScroll: true });
+        }
+
+        // ---- open / close ----------------------------------------------------
+        function close() {
+          if (!scrim) return;
+          scrim.remove();
+          scrim = input = list = null;
+          rows = [];
+        }
+
+        function open() {
+          if (scrim) {
+            input.select();
+            return;
+          }
+          index = collect();
+          scrim = document.createElement("div");
+          scrim.className = "astro-scrim";
+          scrim.innerHTML =
+            '<div class="astro" role="dialog" aria-modal="true" aria-label="Astrolabe">' +
+            '<div class="astro-head">' +
             '<span class="astro-title"><span class="orn" aria-hidden="true">✶</span> Astrolabe</span>' +
             '<input class="astro-input" type="text" autocomplete="off" spellcheck="false" ' +
-              'placeholder="sight a servitor, project, or plate…" aria-label="Search the atlas" ' +
-              'role="combobox" aria-expanded="true" aria-controls="astro-list" />' +
-          "</div>" +
-          '<ul class="astro-list" id="astro-list" role="listbox"></ul>' +
-          '<div class="astro-foot"><span>↑↓ sight</span><span>↵ sail there</span><span>esc dismiss</span>' +
-            "<span>" + index.length + " landmarks · chips, projects, regions, plates</span></div>" +
-        "</div>";
-      document.body.appendChild(scrim);
-      input = scrim.querySelector(".astro-input");
-      list = scrim.querySelector(".astro-list");
-      draw();
-      input.focus();
+            'placeholder="sight a servitor, project, or plate…" aria-label="Search the atlas" ' +
+            'role="combobox" aria-expanded="true" aria-controls="astro-list" />' +
+            "</div>" +
+            '<ul class="astro-list" id="astro-list" role="listbox"></ul>' +
+            '<div class="astro-foot"><span>↑↓ sight</span><span>↵ sail there</span><span>esc dismiss</span>' +
+            "<span>" +
+            index.length +
+            " landmarks · chips, projects, regions, plates</span></div>" +
+            "</div>";
+          document.body.appendChild(scrim);
+          input = scrim.querySelector(".astro-input");
+          list = scrim.querySelector(".astro-list");
+          draw();
+          input.focus();
 
-      input.addEventListener("input", draw);
-      scrim.addEventListener("mousedown", function (e) { if (!e.target.closest(".astro")) close(); });
-      list.addEventListener("click", function (e) {
-        var row = e.target.closest(".astro-row");
-        if (row) sail(rows[+row.dataset.i]);
-      });
-      scrim.addEventListener("keydown", function (e) {
-        if (e.key === "ArrowDown") { e.preventDefault(); move(1); }
-        else if (e.key === "ArrowUp") { e.preventDefault(); move(-1); }
-        else if (e.key === "Enter") { e.preventDefault(); if (rows.length) sail(rows[sel]); }
-        else if (e.key === "Escape") { e.preventDefault(); close(); }
-      });
-    }
+          input.addEventListener("input", draw);
+          scrim.addEventListener("mousedown", function (e) {
+            if (!e.target.closest(".astro")) close();
+          });
+          list.addEventListener("click", function (e) {
+            var row = e.target.closest(".astro-row");
+            if (row) sail(rows[+row.dataset.i]);
+          });
+          scrim.addEventListener("keydown", function (e) {
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              move(1);
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              move(-1);
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              if (rows.length) sail(rows[sel]);
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              close();
+            }
+          });
+        }
 
-    document.addEventListener("keydown", function (e) {
-      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
-        e.preventDefault();
-        scrim ? close() : open();
-      }
-    });
-    var btn = document.getElementById("astro-open");
-    if (btn) btn.addEventListener("click", open);
-  })();
-</script>
-
-</body>
+        document.addEventListener("keydown", function (e) {
+          if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+            e.preventDefault();
+            scrim ? close() : open();
+          }
+        });
+        var btn = document.getElementById("astro-open");
+        if (btn) btn.addEventListener("click", open);
+      })();
+    </script>
+  </body>
 </html>

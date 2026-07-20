@@ -1,12 +1,22 @@
 {
   "name": "claude-code-map",
   "private": true,
-  "type": "module",
   "bin": {
     "claude-code-map": "./bin/cli.ts"
   },
+  "type": "module",
   "scripts": {
-    "start": "node bin/cli.ts"
+    "start": "node bin/cli.ts",
+    "check": "vp check",
+    "test": "vp test run",
+    "release": "vp check && changelogen --release --push",
+    "prepare": "vp config"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "changelogen": "^0.6.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": ">=23.6"

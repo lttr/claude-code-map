@@ -7,7 +7,8 @@ An interactive **cartographer's atlas** of your Claude Code setup. It scans `~/.
 - **Inventory** of all your servitors (skills, commands, subagents, MCPs, hooks) across global, plugin, and project scopes.
 - **Heat** — recency tiers (`hot` ≤7d, `warm` ≤30d, `cool` ≤90d, `stale`, `none`) derived from your transcript history, rendered as ink density.
 - **Contested names** — invocation tokens that resolve to two or more implementations (e.g. a global skill `verify` and a plugin command `/verify`).
-- **Invocation marks** — ☞ user-invoked only (`disable-model-invocation: true`), ✳ model-invoked only (`user-invocable: false`), scraped from skill/command frontmatter.
+- **Frayed lines** — declared wiring whose far end doesn't exist: hook scripts that are missing, `allowed-tools` binaries not on PATH, unresolved `@imports`, and `/plugin:command` mentions that resolve to nothing known.
+- **Invocation marks** — user-invoked only drawn as `/name` (`disable-model-invocation: true`), ✳ model-invoked only (`user-invocable: false`), scraped from skill/command frontmatter.
 - **Regional plates** — one map plate per workspace region, with a project card per project sorted by activity.
 - **The Astrolabe** (<kbd>Ctrl</kbd>+<kbd>K</kbd>) — a sighting instrument: type to fuzzy-find any servitor, project, region or plate; <kbd>Enter</kbd> sails the page to it and flashes the target.
 
@@ -30,12 +31,12 @@ node bin/cli.ts --out atlas.html
 
 ### Options
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-p, --port N` | `7777` | Server port |
-| `--host HOST` | `127.0.0.1` | Bind host |
-| `-o, --out FILE` | — | Render once to FILE (no server) |
-| `-h, --help` | — | Show help |
+| Flag             | Default     | Description                     |
+| ---------------- | ----------- | ------------------------------- |
+| `-p, --port N`   | `7777`      | Server port                     |
+| `--host HOST`    | `127.0.0.1` | Bind host                       |
+| `-o, --out FILE` | —           | Render once to FILE (no server) |
+| `-h, --help`     | —           | Show help                       |
 
 ## How it works
 

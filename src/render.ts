@@ -1,15 +1,39 @@
 import { homedir } from "node:os";
-import type { CollectResult, ContextKind, ContextSource, Item, Kind, PluginInfo, ProjectContext, ProjectInfo } from "./collect.ts";
+import type {
+  CollectResult,
+  ContextKind,
+  ContextSource,
+  Item,
+  Kind,
+  PluginInfo,
+  ProjectContext,
+  ProjectInfo,
+} from "./collect.ts";
 import { loadedContextLines } from "./collect.ts";
 
 const HOME = homedir();
 const home = (s: string) => (s.startsWith(HOME) ? "~" + s.slice(HOME.length) : s);
 
 const esc = (s: unknown): string =>
-  String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  String(s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+  );
 
-const KIND_LABEL: Record<Kind, string> = { mcp: "MCPs", skill: "skills", command: "commands", subagent: "subagents", hook: "hooks" };
-const KIND_SINGULAR: Record<Kind, string> = { mcp: "MCP", skill: "skill", command: "command", subagent: "subagent", hook: "hook" };
+const KIND_LABEL: Record<Kind, string> = {
+  mcp: "MCPs",
+  skill: "skills",
+  command: "commands",
+  subagent: "subagents",
+  hook: "hooks",
+};
+const KIND_SINGULAR: Record<Kind, string> = {
+  mcp: "MCP",
+  skill: "skill",
+  command: "command",
+  subagent: "subagent",
+  hook: "hook",
+};
 const KIND_HUE: Record<Kind, string> = {
   skill: "var(--hue-skill)",
   command: "var(--hue-command)",
@@ -45,27 +69,34 @@ function chip(item: Item): string {
   if (item.contested) cls.push("contested");
   if (item.invocation === "user-only") cls.push("inv-user");
   if (item.invocation === "model-only") cls.push("inv-model");
-  const out = item.refsOut ?? [], inn = item.refsIn ?? [];
+  const out = item.refsOut ?? [],
+    inn = item.refsIn ?? [];
   if (out.length || inn.length) cls.push("has-rel");
   const u = item.usage;
   const lastTxt = u.last ? new Date(u.last * 1000).toISOString().slice(0, 10) : "never";
   // Detail shown in the click popover, carried as data-* (no clunky native title).
-  const usageLine = item.kind === "hook" ? "" : `7d ${u.d7} · 30d ${u.d30} · 90d ${u.d90} · total ${u.total} · last ${lastTxt}`;
-  const extra = item.kind === "hook"
-    ? "passive — fires on this event, not invocation-counted"
-    : item.kind === "mcp"
-    ? `${item.transport ?? "?"}${item.url ? ` · ${item.url}` : ""}${item.projectPath ? ` · @ ${home(item.projectPath)}` : ""}`
-    : "";
+  const usageLine =
+    item.kind === "hook"
+      ? ""
+      : `7d ${u.d7} · 30d ${u.d30} · 90d ${u.d90} · total ${u.total} · last ${lastTxt}`;
+  const extra =
+    item.kind === "hook"
+      ? "passive — fires on this event, not invocation-counted"
+      : item.kind === "mcp"
+        ? `${item.transport ?? "?"}${item.url ? ` · ${item.url}` : ""}${item.projectPath ? ` · @ ${home(item.projectPath)}` : ""}`
+        : "";
   const data =
     ` data-name="${esc(item.name.toLowerCase())}" data-label="${esc(item.name)}" data-kind="${item.kind}"` +
     ` data-loc="${esc(item.location)}"${usageLine ? ` data-usage="${esc(usageLine)}"` : ""}${extra ? ` data-extra="${esc(extra)}"` : ""}` +
     `${out.length ? ` data-out="${esc(out.join(","))}"` : ""}${inn.length ? ` data-in="${esc(inn.join(","))}"` : ""}${item.contested ? ` data-contested="1"` : ""}${item.contestedWith?.length ? ` data-contested-with="${esc(item.contestedWith.join("; "))}"` : ""}` +
     `${item.invocation === "user-only" ? ` data-inv="☞ user-invoked only — disable-model-invocation: true"` : ""}${item.invocation === "model-only" ? ` data-inv="✳ model-invoked only (no slash command) — user-invocable: false"` : ""}`;
-  const ext = item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
+  const ext =
+    item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
   // Route marker, revealed only in relations mode: →n outgoing, ←n incoming.
-  const mark = (out.length || inn.length)
-    ? `<span class="rel-mark" aria-hidden="true">${out.length ? `→${out.length}` : ""}${out.length && inn.length ? " " : ""}${inn.length ? `←${inn.length}` : ""}</span>`
-    : "";
+  const mark =
+    out.length || inn.length
+      ? `<span class="rel-mark" aria-hidden="true">${out.length ? `→${out.length}` : ""}${out.length && inn.length ? " " : ""}${inn.length ? `←${inn.length}` : ""}</span>`
+      : "";
   return `<span class="${cls.join(" ")}"${data} role="button" tabindex="0" aria-label="${esc(chipAria(item))}">${esc(item.name)}${ext}${mark}</span>`;
 }
 
@@ -73,7 +104,8 @@ function chipsOf(items: Item[]): string {
   if (!items.length) return `<div class="muted">— none</div>`;
   const sorted = [...items].sort((a, b) => {
     if (b.usage.total !== a.usage.total) return b.usage.total - a.usage.total;
-    if ((b.usage.last ?? 0) !== (a.usage.last ?? 0)) return (b.usage.last ?? 0) - (a.usage.last ?? 0);
+    if ((b.usage.last ?? 0) !== (a.usage.last ?? 0))
+      return (b.usage.last ?? 0) - (a.usage.last ?? 0);
     return a.name.localeCompare(b.name);
   });
   return `<div class="chips">${sorted.map(chip).join("")}</div>`;
@@ -145,14 +177,25 @@ function flattenItems(result: CollectResult): Item[] {
 
 // Never-invoked instances grouped by the source that ships them — surfaces whole
 // dead installs (a plugin where 0/15 commands were ever called).
-type DeadSource = { label: string; dead: number; total: number; items: { name: string; kind: Kind }[] };
+type DeadSource = {
+  label: string;
+  dead: number;
+  total: number;
+  items: { name: string; kind: Kind }[];
+};
 function deadBySource(result: CollectResult): DeadSource[] {
-  const roll = new Map<string, { dead: number; total: number; items: { name: string; kind: Kind }[] }>();
+  const roll = new Map<
+    string,
+    { dead: number; total: number; items: { name: string; kind: Kind }[] }
+  >();
   const add = (label: string, items: Item[]) => {
     for (const it of counted(items)) {
       const e = roll.get(label) ?? { dead: 0, total: 0, items: [] };
       e.total++;
-      if (it.usage.total === 0) { e.dead++; e.items.push({ name: it.name, kind: it.kind }); }
+      if (it.usage.total === 0) {
+        e.dead++;
+        e.items.push({ name: it.name, kind: it.kind });
+      }
       roll.set(label, e);
     }
   };
@@ -201,10 +244,12 @@ function contestedGroups(items: Item[]): { name: string; kind: Kind; origins: st
 
 function archivedPlugins(result: CollectResult): { name: string; where: string }[] {
   const out: { name: string; where: string }[] = [];
-  for (const p of result.userPlugins) if (p.status === "archived") out.push({ name: p.name, where: "user scope" });
+  for (const p of result.userPlugins)
+    if (p.status === "archived") out.push({ name: p.name, where: "user scope" });
   for (const r of result.regions) {
     for (const proj of r.projects) {
-      for (const sp of proj.scopedPlugins) if (sp.status === "archived") out.push({ name: sp.name, where: home(proj.path) });
+      for (const sp of proj.scopedPlugins)
+        if (sp.status === "archived") out.push({ name: sp.name, where: home(proj.path) });
     }
   }
   return out;
@@ -239,14 +284,17 @@ function ledgerPlate(result: CollectResult): string {
         .join("");
       // Each row opens to the exact cold items — click one to jump to it on the
       // map and check its last-used date before pruning.
-      return `<li class="lf-exp"><details>` +
+      return (
+        `<li class="lf-exp"><details>` +
         `<summary><span class="lf-k">${esc(d.label)}</span><span class="lf-v${allCold ? " bad" : ""}">${d.dead}/${d.total}</span></summary>` +
-        `<div class="lf-items">${links}</div></details></li>`;
+        `<div class="lf-items">${links}</div></details></li>`
+      );
     })
     .join("");
-  const deadMore = dead.length > deadShown.length
-    ? `<div class="lf-more">+ ${dead.length - deadShown.length} more source${dead.length - deadShown.length === 1 ? "" : "s"} with dead items</div>`
-    : "";
+  const deadMore =
+    dead.length > deadShown.length
+      ? `<div class="lf-more">+ ${dead.length - deadShown.length} more source${dead.length - deadShown.length === 1 ? "" : "s"} with dead items</div>`
+      : "";
 
   // Concentration
   const top = topUsed(all, 6);
@@ -254,18 +302,25 @@ function ledgerPlate(result: CollectResult): string {
   const topInv = top.reduce((s, i) => s + i.usage.total, 0);
   const share = totalInv ? Math.round((topInv / totalInv) * 100) : 0;
   const topRows = top
-    .map((i) => `<li><span class="lf-k">${flashLink(i.name, i.kind)}<span class="lf-sub">· ${KIND_SINGULAR[i.kind]}</span></span><span class="lf-v">${i.usage.total}</span></li>`)
+    .map(
+      (i) =>
+        `<li><span class="lf-k">${flashLink(i.name, i.kind)}<span class="lf-sub">· ${KIND_SINGULAR[i.kind]}</span></span><span class="lf-v">${i.usage.total}</span></li>`,
+    )
     .join("");
 
   // Contested
   const groups = contestedGroups(all);
   const cShown = groups.slice(0, 10);
   const cRows = cShown
-    .map((g) => `<li class="lf-clash"><span class="lf-k k-${g.kind}">${esc(g.name)}</span><span class="lf-origins">${g.origins.map((o) => `<span class="lf-origin">${esc(o)}</span>`).join("")}</span></li>`)
+    .map(
+      (g) =>
+        `<li class="lf-clash"><span class="lf-k k-${g.kind}">${esc(g.name)}</span><span class="lf-origins">${g.origins.map((o) => `<span class="lf-origin">${esc(o)}</span>`).join("")}</span></li>`,
+    )
     .join("");
-  const cMore = groups.length > cShown.length
-    ? `<div class="lf-more">+ ${groups.length - cShown.length} more contested name${groups.length - cShown.length === 1 ? "" : "s"}</div>`
-    : "";
+  const cMore =
+    groups.length > cShown.length
+      ? `<div class="lf-more">+ ${groups.length - cShown.length} more contested name${groups.length - cShown.length === 1 ? "" : "s"}</div>`
+      : "";
 
   // Attrition / cruft
   const archived = archivedPlugins(result);
@@ -391,16 +446,21 @@ function compassPlate(): string {
 
 function relationsPlate(result: CollectResult): string {
   const rels = result.relations;
-  const rows = rels.map((r) => {
-    const refs = r.refs.map((ref) =>
-      `<span class="rel-to k-${ref.kind}${ref.ambiguous ? " amb" : ""}"${ref.ambiguous ? ` title="contested name — resolves to 2+ items"` : ""}>${esc(ref.name)}${ref.ambiguous ? "<span class=\"q\">?</span>" : ""}</span>`,
-    ).join("");
-    return `<div class="rel-row">
+  const rows = rels
+    .map((r) => {
+      const refs = r.refs
+        .map(
+          (ref) =>
+            `<span class="rel-to k-${ref.kind}${ref.ambiguous ? " amb" : ""}"${ref.ambiguous ? ` title="contested name — resolves to 2+ items"` : ""}>${esc(ref.name)}${ref.ambiguous ? '<span class="q">?</span>' : ""}</span>`,
+        )
+        .join("");
+      return `<div class="rel-row">
       <span class="rel-from k-${r.fromKind}">${esc(r.from)}</span>
       <span class="rel-arrow">→</span>
       <span class="rel-refs">${refs}</span>
     </div>`;
-  }).join("");
+    })
+    .join("");
   return `
   <section class="plate relations-plate">
     <h2 class="plate-title">Relations <span class="sub">· declared references</span>
@@ -448,7 +508,7 @@ function gazetteer(result: CollectResult): string {
 const CTX_LABEL: Record<ContextKind, string> = {
   "claude-md": "CLAUDE.md",
   "claude-local": "CLAUDE.local",
-  "rule": "rule",
+  rule: "rule",
   "memory-index": "memory",
 };
 
@@ -460,20 +520,34 @@ function briefingStamp(ctx: ProjectContext | undefined): string {
   const ticks = [
     ctx.hasOverflow ? "overflow" : "",
     ctx.hasOverCliff ? "long CLAUDE.md" : "",
-    ctx.onDemandRules ? `${ctx.onDemandRules} on-demand rule${ctx.onDemandRules === 1 ? "" : "s"}` : "",
-  ].filter(Boolean).map((t) => `<span class="briefing-tick">${esc(t)}</span>`).join("");
-  const rows = ctx.sources.map((s) => {
-    const load = s.loadMode === "on-demand" ? "on-demand"
-      : s.loadMode === "overflow-truncated" ? `${s.lines} ln · head only`
-      : `${s.lines} ln`;
-    const imp = s.importLines ? ` +${s.importLines} imported${s.importsDeep ? "…" : ""}` : "";
-    return `<div class="briefing-src"><span class="bs-kind">${esc(CTX_LABEL[s.kind])}</span>` +
-      `<span class="bs-scope">${esc(s.scope)}</span>` +
-      `<span class="bs-lines">${esc(load)}${esc(imp)}</span></div>`;
-  }).join("");
-  return `<details class="briefing"><summary class="briefing-stamp">` +
+    ctx.onDemandRules
+      ? `${ctx.onDemandRules} on-demand rule${ctx.onDemandRules === 1 ? "" : "s"}`
+      : "",
+  ]
+    .filter(Boolean)
+    .map((t) => `<span class="briefing-tick">${esc(t)}</span>`)
+    .join("");
+  const rows = ctx.sources
+    .map((s) => {
+      const load =
+        s.loadMode === "on-demand"
+          ? "on-demand"
+          : s.loadMode === "overflow-truncated"
+            ? `${s.lines} ln · head only`
+            : `${s.lines} ln`;
+      const imp = s.importLines ? ` +${s.importLines} imported${s.importsDeep ? "…" : ""}` : "";
+      return (
+        `<div class="briefing-src"><span class="bs-kind">${esc(CTX_LABEL[s.kind])}</span>` +
+        `<span class="bs-scope">${esc(s.scope)}</span>` +
+        `<span class="bs-lines">${esc(load)}${esc(imp)}</span></div>`
+      );
+    })
+    .join("");
+  return (
+    `<details class="briefing"><summary class="briefing-stamp">` +
     `<span class="orn" aria-hidden="true">❧</span> briefing ${ctx.alwaysLines} ln${ticks}</summary>` +
-    `<div class="briefing-list">${rows}</div></details>`;
+    `<div class="briefing-list">${rows}</div></details>`
+  );
 }
 
 // The global standing context every project loads, stated once so a card's stamp
@@ -489,8 +563,10 @@ function baselineStrip(baseline: ContextSource[]): string {
   if (userRules.length) parts.push(`user rules (${load(userRules)} across ${userRules.length})`);
   if (managed.length) parts.push(`managed policy (${load(managed)})`);
   if (!parts.length) return "";
-  return `<div class="baseline-strip"><span class="orn" aria-hidden="true">❧</span> ` +
-    `Every project also loads <strong>${load(baseline)} ln</strong> of standing context — ${parts.join(" · ")}.</div>`;
+  return (
+    `<div class="baseline-strip"><span class="orn" aria-hidden="true">❧</span> ` +
+    `Every project also loads <strong>${load(baseline)} ln</strong> of standing context — ${parts.join(" · ")}.</div>`
+  );
 }
 
 function projectCard(proj: ProjectInfo): string {
@@ -502,7 +578,8 @@ function projectCard(proj: ProjectInfo): string {
   const a = proj.activity;
   const lastTxt = a.last ? new Date(a.last * 1000).toISOString().slice(0, 10) : "—";
   const summary = a.total ? `${a.total} invocations · last ${lastTxt}` : "no recorded usage";
-  const empty = !local.length && !proj.scopedPlugins.length && !proj.projectMcps.length && !proj.context;
+  const empty =
+    !local.length && !proj.scopedPlugins.length && !proj.projectMcps.length && !proj.context;
   return `
   <div class="proj-card ${empty ? "empty" : ""}">
     <div class="proj-head">
@@ -522,28 +599,33 @@ function projectCard(proj: ProjectInfo): string {
 }
 
 function regionsBlock(result: CollectResult): string {
-  if (!result.regions.length) return `<section class="plate"><h2 class="plate-title">Regions</h2><p class="muted">— no active projects found.</p></section>`;
-  return result.regions.map((r) => `
+  if (!result.regions.length)
+    return `<section class="plate"><h2 class="plate-title">Regions</h2><p class="muted">— no active projects found.</p></section>`;
+  return result.regions
+    .map(
+      (r) => `
     <section class="region">
       <h2>${esc(r.label)} <span class="sub">${r.projects.length} project${r.projects.length === 1 ? "" : "s"} · ${r.activity.total} invocations</span></h2>
       <div class="project-list">${r.projects.map(projectCard).join("")}</div>
-    </section>`).join("");
+    </section>`,
+    )
+    .join("");
 }
 
 export function renderAtlas(result: CollectResult): string {
   const t = result.tally;
   const tallyA = tallyRow("tally-counts", [
-    { num: t.counts.mcp,      lbl: "MCPs" },
-    { num: t.counts.skill,    lbl: "Skills" },
-    { num: t.counts.command,  lbl: "Commands" },
+    { num: t.counts.mcp, lbl: "MCPs" },
+    { num: t.counts.skill, lbl: "Skills" },
+    { num: t.counts.command, lbl: "Commands" },
     { num: t.counts.subagent, lbl: "Subagents" },
-    { num: t.counts.hook,     lbl: "Hooks" },
+    { num: t.counts.hook, lbl: "Hooks" },
   ]);
   const tallyB = tallyRow("tally-stats", [
-    { num: t.invocations7d,  lbl: "Invocations · 7d" },
+    { num: t.invocations7d, lbl: "Invocations · 7d" },
     { num: t.invocations30d, lbl: "Invocations · 30d" },
-    { num: t.contested,      lbl: "Contested names" },
-    { num: t.dormant,        lbl: "Dormant projects" },
+    { num: t.contested, lbl: "Contested names" },
+    { num: t.dormant, lbl: "Dormant projects" },
   ]);
   return `
 ${tallyA}

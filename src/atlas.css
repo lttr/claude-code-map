@@ -1,46 +1,75 @@
 :root {
-  --paper:      #efe3c8;
-  --paper-2:    #e7d8b6;
-  --paper-3:    #d9c79c;
-  --ink:        #3a2a17;
-  --ink-soft:   #5a4326;
-  --ink-faint:  #6b5732;
-  --rule:       #7a5a33;
+  --paper: #efe3c8;
+  --paper-2: #e7d8b6;
+  --paper-3: #d9c79c;
+  --ink: #3a2a17;
+  --ink-soft: #5a4326;
+  --ink-faint: #6b5732;
+  --rule: #7a5a33;
   --water-deep: #6b8286;
-  --accent:     #a24a2a;
-  --accent-2:   #5b6b3a;
+  --accent: #a24a2a;
+  --accent-2: #5b6b3a;
 
   /* Period-ink kind hues, AA-tuned against --paper. */
-  --hue-skill:    #1f3d6b;  /* iron-gall — deep iron blue-black */
-  --hue-command:  #8a2e15;  /* madder / red-ochre */
-  --hue-subagent: #3d5a3a;  /* verdigris / sage */
-  --hue-mcp:      #5a3a18;  /* sepia / umber */
-  --hue-hook:     #5a2e4a;  /* tyrian / mulberry */
+  --hue-skill: #1f3d6b; /* iron-gall — deep iron blue-black */
+  --hue-command: #8a2e15; /* madder / red-ochre */
+  --hue-subagent: #3d5a3a; /* verdigris / sage */
+  --hue-mcp: #5a3a18; /* sepia / umber */
+  --hue-hook: #5a2e4a; /* tyrian / mulberry */
 }
 
-html, body { margin: 0; padding: 0; background: #2a2116; }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #2a2116;
+}
 body {
   font-family: "IM Fell English", "IM Fell DW Pica", Georgia, serif;
-  color: var(--ink); font-size: 18px; line-height: 1.5;
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.5;
   font-variant-numeric: lining-nums;
 }
 .page {
-  width: 100%; max-width: 1500px; margin: 40px auto; box-sizing: border-box;
-  background:
-    radial-gradient(ellipse at 50% 0%, #f3e8cf 0%, var(--paper) 40%, var(--paper-2) 85%, var(--paper-3) 100%);
-  box-shadow: 0 40px 120px rgba(0,0,0,.55);
-  position: relative; padding: 60px 70px 80px; overflow: hidden;
+  width: 100%;
+  max-width: 1500px;
+  margin: 40px auto;
+  box-sizing: border-box;
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    #f3e8cf 0%,
+    var(--paper) 40%,
+    var(--paper-2) 85%,
+    var(--paper-3) 100%
+  );
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+  position: relative;
+  padding: 60px 70px 80px;
+  overflow: hidden;
 }
 .page::before {
-  content: ""; position: absolute; inset: 0;
+  content: "";
+  position: absolute;
+  inset: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='380' height='380'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.23  0 0 0 0 0.17  0 0 0 0 0.09  0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity: .55; mix-blend-mode: multiply; pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 .page::after {
-  content: ""; position: absolute; inset: 0;
+  content: "";
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(90,50,15,.35) 100%),
-    linear-gradient(180deg, rgba(90,50,15,.08), transparent 10%, transparent 90%, rgba(90,50,15,.18));
+    radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(90, 50, 15, 0.35) 100%),
+    linear-gradient(
+      180deg,
+      rgba(90, 50, 15, 0.08),
+      transparent 10%,
+      transparent 90%,
+      rgba(90, 50, 15, 0.18)
+    );
   pointer-events: none;
 }
 
@@ -48,184 +77,409 @@ body {
    noise but below all content; faded into the parchment via low opacity,
    multiply blend, and a radial mask that dissolves its outer edges. */
 .atlas-ghost {
-  position: absolute; top: -70px; right: -90px;
-  width: 640px; height: 640px; max-width: 55%;
-  z-index: 0; pointer-events: none;
-  opacity: .12; mix-blend-mode: multiply;
+  position: absolute;
+  top: -70px;
+  right: -90px;
+  width: 640px;
+  height: 640px;
+  max-width: 55%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  mix-blend-mode: multiply;
   -webkit-mask-image: radial-gradient(ellipse at 70% 30%, #000 35%, transparent 72%);
-          mask-image: radial-gradient(ellipse at 70% 30%, #000 35%, transparent 72%);
+  mask-image: radial-gradient(ellipse at 70% 30%, #000 35%, transparent 72%);
 }
-.atlas-ghost svg { width: 100%; height: 100%; display: block; }
-.page > :not(.atlas-ghost) { position: relative; z-index: 1; }
+.atlas-ghost svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.page > :not(.atlas-ghost) {
+  position: relative;
+  z-index: 1;
+}
 
 /* Cartouche */
-.cartouche { position: relative; text-align: center; padding: 10px 0 30px; }
+.cartouche {
+  position: relative;
+  text-align: center;
+  padding: 10px 0 30px;
+}
 .eyebrow {
-  font-family: "IM Fell English SC", serif; letter-spacing: .35em;
-  color: var(--ink-faint); font-size: 15px; text-transform: uppercase;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.35em;
+  color: var(--ink-faint);
+  font-size: 15px;
+  text-transform: uppercase;
 }
 h1.title {
-  font-family: "IM Fell English", serif; font-weight: 400; font-size: 76px;
-  letter-spacing: .02em; margin: 10px 0 6px; color: var(--ink);
+  font-family: "IM Fell English", serif;
+  font-weight: 400;
+  font-size: 76px;
+  letter-spacing: 0.02em;
+  margin: 10px 0 6px;
+  color: var(--ink);
 }
-h1.title em { font-style: italic; color: var(--accent); }
+h1.title em {
+  font-style: italic;
+  color: var(--accent);
+}
 .subtitle {
-  font-style: italic; color: var(--ink-soft); font-size: 21px;
-  margin: 0 auto 18px; max-width: 1080px;
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 21px;
+  margin: 0 auto 18px;
+  max-width: 1080px;
 }
 .rule-orn {
-  display: flex; align-items: center; justify-content: center;
-  gap: 14px; color: var(--rule); margin: 10px 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--rule);
+  margin: 10px 0 4px;
 }
-.rule-orn .line { flex: 0 0 160px; height: 1px; background: var(--rule); opacity: .55; }
-.rule-orn .diamond { width: 8px; height: 8px; background: var(--rule); transform: rotate(45deg); opacity: .7; }
-.rule-orn .fleur { font-size: 24px; color: var(--rule); }
+.rule-orn .line {
+  flex: 0 0 160px;
+  height: 1px;
+  background: var(--rule);
+  opacity: 0.55;
+}
+.rule-orn .diamond {
+  width: 8px;
+  height: 8px;
+  background: var(--rule);
+  transform: rotate(45deg);
+  opacity: 0.7;
+}
+.rule-orn .fleur {
+  font-size: 24px;
+  color: var(--rule);
+}
 
 /* Loading overlay (shown until /atlas.html arrives) */
-.atlas-loading { min-height: 240px; position: relative; }
+.atlas-loading {
+  min-height: 240px;
+  position: relative;
+}
 .loading-overlay {
-  margin: 36px auto 0; max-width: 600px; text-align: center;
-  padding: 40px 20px; border: 1px solid var(--rule);
+  margin: 36px auto 0;
+  max-width: 600px;
+  text-align: center;
+  padding: 40px 20px;
+  border: 1px solid var(--rule);
   background: rgba(239, 227, 200, 0.4);
 }
-.loading-mark { font-size: 48px; color: var(--rule); animation: pulse 1.4s ease-in-out infinite; }
+.loading-mark {
+  font-size: 48px;
+  color: var(--rule);
+  animation: pulse 1.4s ease-in-out infinite;
+}
 .loading-text {
-  font-family: "IM Fell English SC", serif; letter-spacing: .25em;
-  font-size: 15px; color: var(--ink-faint); text-transform: uppercase; margin-top: 8px;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.25em;
+  font-size: 15px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-top: 8px;
 }
 .atlas-error {
-  margin: 36px auto 0; max-width: 800px; padding: 20px;
-  border: 1px solid var(--accent); background: rgba(162, 74, 42, 0.08);
-  color: var(--accent); font-family: "JetBrains Mono", monospace; font-size: 15px;
+  margin: 36px auto 0;
+  max-width: 800px;
+  padding: 20px;
+  border: 1px solid var(--accent);
+  background: rgba(162, 74, 42, 0.08);
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
 }
 @keyframes pulse {
-  0%, 100% { opacity: .55; transform: scale(1); }
-  50%      { opacity: 1;   transform: scale(1.08); }
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
 }
 
 /* Tally — two rows */
 .tally {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  margin: 18px auto 0; border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule); padding: 16px 0;
-  max-width: 1280px; position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 18px auto 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 16px 0;
+  max-width: 1280px;
+  position: relative;
 }
-.tally.tally-counts { grid-template-columns: repeat(5, 1fr); }
-.tally.tally-counts .num { font-size: 44px; }
-.tally + .tally { margin-top: 14px; }
-.tally::before, .tally::after {
-  content: ""; position: absolute; left: 0; right: 0;
-  border-top: 1px solid var(--rule); opacity: .35;
+.tally.tally-counts {
+  grid-template-columns: repeat(5, 1fr);
 }
-.tally::before { top: -4px; }
-.tally::after  { bottom: -4px; }
-.tally > div { text-align: center; border-right: 1px solid var(--rule); padding: 0 8px; }
-.tally > div:last-child { border-right: none; }
+.tally.tally-counts .num {
+  font-size: 44px;
+}
+.tally + .tally {
+  margin-top: 14px;
+}
+.tally::before,
+.tally::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--rule);
+  opacity: 0.35;
+}
+.tally::before {
+  top: -4px;
+}
+.tally::after {
+  bottom: -4px;
+}
+.tally > div {
+  text-align: center;
+  border-right: 1px solid var(--rule);
+  padding: 0 8px;
+}
+.tally > div:last-child {
+  border-right: none;
+}
 .tally .num {
-  font-family: "IM Fell English", serif; font-size: 54px; line-height: 1;
-  color: var(--ink); font-feature-settings: "lnum";
+  font-family: "IM Fell English", serif;
+  font-size: 54px;
+  line-height: 1;
+  color: var(--ink);
+  font-feature-settings: "lnum";
 }
-.tally.tally-stats .num { font-size: 38px; }
+.tally.tally-stats .num {
+  font-size: 38px;
+}
 .tally .lbl {
-  font-family: "IM Fell English SC", serif; letter-spacing: .22em;
-  font-size: 15px; color: var(--ink-faint); text-transform: uppercase; margin-top: 8px;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.22em;
+  font-size: 15px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin-top: 8px;
 }
 
 /* Compass plate */
 .compass-wrap {
-  display: flex; align-items: center; justify-content: center; gap: 64px;
-  margin: 40px 0 12px; padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 64px;
+  margin: 40px 0 12px;
+  padding: 18px 24px;
   border: 1px solid var(--rule);
   background: rgba(239, 227, 200, 0.35);
   position: relative;
 }
 .compass-wrap::before {
-  content: ""; position: absolute; inset: 4px;
-  border: 1px solid var(--rule); opacity: .4; pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--rule);
+  opacity: 0.4;
+  pointer-events: none;
 }
-.compass-svg { flex: 0 0 220px; }
-.compass-legend { flex: 0 1 auto; display: flex; gap: 56px; flex-wrap: wrap; align-items: flex-start; }
-.compass-legend .leg-col { display: flex; flex-direction: column; gap: 18px; }
+.compass-svg {
+  flex: 0 0 220px;
+}
+.compass-legend {
+  flex: 0 1 auto;
+  display: flex;
+  gap: 56px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.compass-legend .leg-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
 /* Sanborn-key tabular alignment: a shared sample gutter so every description
    lines up in its own column regardless of swatch/chip width. */
 .compass-legend .leg-group {
-  display: grid; grid-template-columns: max-content 1fr;
-  align-items: center; gap: 6px 14px;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  align-items: center;
+  gap: 6px 14px;
 }
-.compass-legend .leg-sample { justify-self: start; }
+.compass-legend .leg-sample {
+  justify-self: start;
+}
 .compass-legend .leg-desc {
-  font-family: "IM Fell English", serif; font-size: 16px; color: var(--ink-soft);
+  font-family: "IM Fell English", serif;
+  font-size: 16px;
+  color: var(--ink-soft);
 }
 .compass-legend .leg-sample .swatch {
-  display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
   border: 1px solid var(--ink-faint);
 }
 .compass-legend .leg-head {
-  margin: 0 0 2px; grid-column: 1 / -1;
-  font-family: "IM Fell English SC", serif; letter-spacing: .2em;
-  font-size: 15px; color: var(--ink-faint); text-transform: uppercase;
-  border-bottom: 1px solid var(--rule); padding-bottom: 4px;
+  margin: 0 0 2px;
+  grid-column: 1 / -1;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.2em;
+  font-size: 15px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 4px;
 }
 
 /* Gazetteer (overview inventory + regional plates share chip styles) */
-.plate { margin: 48px 0 0; }
+.plate {
+  margin: 48px 0 0;
+}
 .plate-title {
-  font-family: "IM Fell English", serif; font-size: 38px; margin: 0 0 4px; color: var(--ink);
-  display: flex; align-items: baseline; gap: 16px;
+  font-family: "IM Fell English", serif;
+  font-size: 38px;
+  margin: 0 0 4px;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
 }
 .plate-title .sub {
-  font-style: italic; color: var(--ink-faint); font-size: 22px; letter-spacing: 0;
-  margin-left: auto; text-align: right;
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: 22px;
+  letter-spacing: 0;
+  margin-left: auto;
+  text-align: right;
 }
-.plate-note { font-style: italic; color: var(--ink-soft); margin: 0 0 20px; font-size: 18px; }
+.plate-note {
+  font-style: italic;
+  color: var(--ink-soft);
+  margin: 0 0 20px;
+  font-size: 18px;
+}
 
 .gaz-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
-  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 .gaz-col {
-  padding: 22px 26px 26px; border-right: 1px solid var(--rule); position: relative;
+  padding: 22px 26px 26px;
+  border-right: 1px solid var(--rule);
+  position: relative;
 }
-.gaz-col:last-child { border-right: none; }
+.gaz-col:last-child {
+  border-right: none;
+}
 .gaz-col h3 {
-  font-family: "IM Fell English SC", serif; letter-spacing: .18em;
-  font-size: 17px; margin: 0 0 4px; color: var(--ink); text-transform: uppercase;
-  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.18em;
+  font-size: 17px;
+  margin: 0 0 4px;
+  color: var(--ink);
+  text-transform: uppercase;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
 }
 .gaz-col h3 .count {
-  font-family: "IM Fell English", serif; font-style: italic; color: var(--ink-faint);
-  letter-spacing: 0; font-size: 17px; text-transform: none;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  color: var(--ink-faint);
+  letter-spacing: 0;
+  font-size: 17px;
+  text-transform: none;
 }
 .gaz-col .region-note {
-  font-style: italic; color: var(--ink-soft); font-size: 16px;
-  margin: 0 0 14px; border-bottom: 1px dashed var(--rule); padding-bottom: 10px;
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 16px;
+  margin: 0 0 14px;
+  border-bottom: 1px dashed var(--rule);
+  padding-bottom: 10px;
 }
 
 /* Chip: hue = kind, ink density = recency, dotted = none */
-.chips { display: flex; flex-wrap: wrap; gap: 5px 6px; margin: 6px 0 14px; }
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 6px;
+  margin: 6px 0 14px;
+}
 .chip {
-  display: inline-flex; align-items: baseline; gap: 4px;
-  padding: 2px 9px; border-radius: 12px; font-size: 15px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-size: 15px;
   font-family: "IM Fell English", serif;
-  border: 1px solid; white-space: nowrap;
-  background: rgba(255,255,255,0.18);
+  border: 1px solid;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.18);
   cursor: pointer;
 }
 .chip .ext {
-  font-family: "JetBrains Mono", monospace; font-size: 15px;
-  letter-spacing: 0; opacity: .65;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
+  letter-spacing: 0;
+  opacity: 0.65;
 }
-.chip.k-skill    { color: var(--hue-skill);    border-color: color-mix(in srgb, var(--hue-skill) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-skill) 6%, var(--paper)); }
-.chip.k-command  { color: var(--hue-command);  border-color: color-mix(in srgb, var(--hue-command) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-command) 6%, var(--paper)); }
-.chip.k-subagent { color: var(--hue-subagent); border-color: color-mix(in srgb, var(--hue-subagent) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-subagent) 6%, var(--paper)); }
-.chip.k-mcp      { color: var(--hue-mcp);      border-color: color-mix(in srgb, var(--hue-mcp) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-mcp) 6%, var(--paper)); }
-.chip.k-hook     { color: var(--hue-hook);     border-color: color-mix(in srgb, var(--hue-hook) 60%, var(--rule)); background: color-mix(in srgb, var(--hue-hook) 6%, var(--paper)); }
+.chip.k-skill {
+  color: var(--hue-skill);
+  border-color: color-mix(in srgb, var(--hue-skill) 60%, var(--rule));
+  background: color-mix(in srgb, var(--hue-skill) 6%, var(--paper));
+}
+.chip.k-command {
+  color: var(--hue-command);
+  border-color: color-mix(in srgb, var(--hue-command) 60%, var(--rule));
+  background: color-mix(in srgb, var(--hue-command) 6%, var(--paper));
+}
+.chip.k-subagent {
+  color: var(--hue-subagent);
+  border-color: color-mix(in srgb, var(--hue-subagent) 60%, var(--rule));
+  background: color-mix(in srgb, var(--hue-subagent) 6%, var(--paper));
+}
+.chip.k-mcp {
+  color: var(--hue-mcp);
+  border-color: color-mix(in srgb, var(--hue-mcp) 60%, var(--rule));
+  background: color-mix(in srgb, var(--hue-mcp) 6%, var(--paper));
+}
+.chip.k-hook {
+  color: var(--hue-hook);
+  border-color: color-mix(in srgb, var(--hue-hook) 60%, var(--rule));
+  background: color-mix(in srgb, var(--hue-hook) 6%, var(--paper));
+}
 
-.chip.r-hot   { background: color-mix(in srgb, currentColor 22%, var(--paper)); font-weight: 600; }
-.chip.r-warm  { background: color-mix(in srgb, currentColor 14%, var(--paper)); }
-.chip.r-cool  { background: color-mix(in srgb, currentColor 8%,  var(--paper)); }
-.chip.r-stale { background: color-mix(in srgb, currentColor 3%,  var(--paper)); opacity: .85; }
-.chip.r-none  { background: transparent; border-style: dashed; opacity: .65; }
+.chip.r-hot {
+  background: color-mix(in srgb, currentColor 22%, var(--paper));
+  font-weight: 600;
+}
+.chip.r-warm {
+  background: color-mix(in srgb, currentColor 14%, var(--paper));
+}
+.chip.r-cool {
+  background: color-mix(in srgb, currentColor 8%, var(--paper));
+}
+.chip.r-stale {
+  background: color-mix(in srgb, currentColor 3%, var(--paper));
+  opacity: 0.85;
+}
+.chip.r-none {
+  background: transparent;
+  border-style: dashed;
+  opacity: 0.65;
+}
 
 /* Hooks are passive: they fire on events, not by invocation, so usage can't be
    measured. They always land in r-none — but the dashed "never used" look would
@@ -242,335 +496,816 @@ h1.title em { font-style: italic; color: var(--accent); }
     45deg,
     color-mix(in srgb, var(--hue-hook) 16%, transparent) 0,
     color-mix(in srgb, var(--hue-hook) 16%, transparent) 1px,
-    transparent 1px, transparent 5px
+    transparent 1px,
+    transparent 5px
   );
 }
 
 .chip.contested::after {
-  content: "✦"; color: var(--accent); margin-left: 2px;
-  font-family: "IM Fell English", serif; font-size: 15px; vertical-align: super;
+  content: "✦";
+  color: var(--accent);
+  margin-left: 2px;
+  font-family: "IM Fell English", serif;
+  font-size: 15px;
+  vertical-align: super;
 }
 
-/* Invocation restriction from frontmatter. Manicule ☞ = only the user's hand
-   invokes it (disable-model-invocation); spark ✳ = only the model reaches for
-   it, no slash command (user-invocable: false). Muted so recency ink still
-   dominates; details in the chip popover. */
-.chip.inv-user::before,
+/* Invocation restriction from frontmatter. A user-only item is drawn as the
+   slash command it's typed as: /name (disable-model-invocation). Spark ✳ = only
+   the model reaches for it, no slash command (user-invocable: false) — muted so
+   recency ink still dominates; details in the chip popover. */
+.chip.inv-user::before {
+  content: "/";
+}
 .chip.inv-model::before {
-  font-size: 15px; opacity: .7; margin-right: 1px;
+  content: "✳";
+  font-size: 15px;
+  opacity: 0.7;
+  margin-right: 1px;
   font-family: "IM Fell English", serif;
 }
-.chip.inv-user::before { content: "☞"; }
-.chip.inv-model::before { content: "✳"; }
-.chip-pop .pop-inv { font-style: italic; }
+.chip-pop .pop-inv {
+  font-style: italic;
+}
 
 /* Relations plate — declared skill/command references, behind a toggle knob */
-.relations-plate .plate-title { display: flex; align-items: baseline; gap: 10px; }
-.amb-key.amb { color: var(--accent); }
-.rel-knob {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
-  font-family: "IM Fell English SC", serif; font-size: 15px; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--ink-faint);
+.relations-plate .plate-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
-.rel-knob input { position: absolute; opacity: 0; width: 0; height: 0; }
+.amb-key.amb {
+  color: var(--accent);
+}
+.rel-knob {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-family: "IM Fell English SC", serif;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.rel-knob input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
 .rel-knob-track {
-  width: 30px; height: 16px; border-radius: 9px; border: 1px solid var(--rule);
-  background: transparent; position: relative; transition: background .15s;
+  width: 30px;
+  height: 16px;
+  border-radius: 9px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  position: relative;
+  transition: background 0.15s;
 }
 .rel-knob-track::after {
-  content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px;
-  border-radius: 50%; background: var(--ink-faint); transition: transform .15s, background .15s;
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  transition:
+    transform 0.15s,
+    background 0.15s;
 }
-.rel-knob input:checked + .rel-knob-track { background: color-mix(in srgb, var(--accent) 22%, var(--paper)); border-color: var(--accent); }
-.rel-knob input:checked + .rel-knob-track::after { transform: translateX(14px); background: var(--accent); }
-.rel-knob input:focus-visible + .rel-knob-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rel-knob input:checked + .rel-knob-track {
+  background: color-mix(in srgb, var(--accent) 22%, var(--paper));
+  border-color: var(--accent);
+}
+.rel-knob input:checked + .rel-knob-track::after {
+  transform: translateX(14px);
+  background: var(--accent);
+}
+.rel-knob input:focus-visible + .rel-knob-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
-.rel-body { display: none; margin-top: 12px; }
-#atlas:has(#rel-toggle:checked) .rel-body { display: block; }
+.rel-body {
+  display: none;
+  margin-top: 12px;
+}
+#atlas:has(#rel-toggle:checked) .rel-body {
+  display: block;
+}
 .rel-row {
-  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-  padding: 4px 0; border-bottom: 1px dotted color-mix(in srgb, var(--rule) 40%, transparent);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+  border-bottom: 1px dotted color-mix(in srgb, var(--rule) 40%, transparent);
 }
 .rel-from {
-  font-family: "IM Fell English", serif; font-weight: 600;
-  flex: 0 0 200px; color: var(--ink);
+  font-family: "IM Fell English", serif;
+  font-weight: 600;
+  flex: 0 0 200px;
+  color: var(--ink);
 }
-.rel-from.k-skill   { color: var(--hue-skill); }
-.rel-from.k-command { color: var(--hue-command); }
-.rel-arrow { color: var(--ink-faint); }
-.rel-refs { display: flex; flex-wrap: wrap; gap: 4px 10px; }
-.rel-to { font-family: "IM Fell English", serif; color: var(--ink-soft); }
-.rel-to.k-skill   { color: var(--hue-skill); }
-.rel-to.k-command { color: var(--hue-command); }
-.rel-to.amb { color: var(--accent); }
-.rel-to .q { vertical-align: super; font-size: 15px; margin-left: 1px; }
+.rel-from.k-skill {
+  color: var(--hue-skill);
+}
+.rel-from.k-command {
+  color: var(--hue-command);
+}
+.rel-from.k-subagent {
+  color: var(--hue-subagent);
+}
+.rel-arrow {
+  color: var(--ink-faint);
+}
+.rel-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.rel-to {
+  font-family: "IM Fell English", serif;
+  color: var(--ink-soft);
+}
+.rel-to.k-skill {
+  color: var(--hue-skill);
+}
+.rel-to.k-command {
+  color: var(--hue-command);
+}
+.rel-to.k-subagent {
+  color: var(--hue-subagent);
+}
+.rel-to.amb {
+  color: var(--accent);
+}
+.rel-to .q {
+  vertical-align: super;
+  font-size: 15px;
+  margin-left: 1px;
+}
 
 /* Per-chip route marker — only surfaces in relations mode (knob on), so the
    default view stays clean. Participating chips also get a faint accent ring. */
 .rel-mark {
-  display: none; margin-left: 4px; font-family: "JetBrains Mono", monospace;
-  font-size: 15px; letter-spacing: 0; color: var(--accent); opacity: .9;
+  display: none;
+  margin-left: 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--accent);
+  opacity: 0.9;
 }
-#atlas:has(#rel-toggle:checked) .chip.has-rel .rel-mark { display: inline; }
+#atlas:has(#rel-toggle:checked) .chip.has-rel .rel-mark {
+  display: inline;
+}
 #atlas:has(#rel-toggle:checked) .chip.has-rel {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--rule));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 /* Selected chip (popover open) + flash when a popover link points at it */
-.chip.sel { outline: 2px solid var(--accent); outline-offset: 1px; }
-@keyframes chip-flash {
-  0%, 100% { box-shadow: 0 0 0 0 transparent; }
-  20%      { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent); }
+.chip.sel {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
-.chip.flash { animation: chip-flash 1.5s ease-out; }
+@keyframes chip-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  20% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+}
+.chip.flash {
+  animation: chip-flash 1.5s ease-out;
+}
 
 /* Click popover — readable detail card with clickable reference links */
 .chip-pop {
-  position: absolute; z-index: 50; max-width: 320px; min-width: 180px;
-  background: var(--paper); border: 1px solid var(--rule); border-radius: 8px;
-  box-shadow: 0 6px 22px rgba(40, 26, 10, .28);
-  padding: 10px 12px; font-family: "IM Fell English", serif; color: var(--ink);
+  position: absolute;
+  z-index: 50;
+  max-width: 320px;
+  min-width: 180px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: 0 6px 22px rgba(40, 26, 10, 0.28);
+  padding: 10px 12px;
+  font-family: "IM Fell English", serif;
+  color: var(--ink);
 }
-.pop-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-.pop-name { font-size: 17px; font-weight: 600; }
-.pop-name.k-skill { color: var(--hue-skill); }
-.pop-name.k-command { color: var(--hue-command); }
-.pop-name.k-subagent { color: var(--hue-subagent); }
-.pop-name.k-mcp { color: var(--hue-mcp); }
-.pop-name.k-hook { color: var(--hue-hook); }
+.pop-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.pop-name {
+  font-size: 17px;
+  font-weight: 600;
+}
+.pop-name.k-skill {
+  color: var(--hue-skill);
+}
+.pop-name.k-command {
+  color: var(--hue-command);
+}
+.pop-name.k-subagent {
+  color: var(--hue-subagent);
+}
+.pop-name.k-mcp {
+  color: var(--hue-mcp);
+}
+.pop-name.k-hook {
+  color: var(--hue-hook);
+}
 .pop-kind {
-  font-family: "IM Fell English SC", serif; font-size: 15px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--ink-faint);
+  font-family: "IM Fell English SC", serif;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
-.pop-meta { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--ink-soft); margin: 2px 0; }
-.pop-contested { color: var(--accent); }
-.pop-sec { display: flex; gap: 8px; margin-top: 7px; align-items: baseline; flex-wrap: wrap; }
+.pop-meta {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin: 2px 0;
+}
+.pop-contested {
+  color: var(--accent);
+}
+.pop-sec {
+  display: flex;
+  gap: 8px;
+  margin-top: 7px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
 .pop-lbl {
-  font-family: "IM Fell English SC", serif; font-size: 15px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--ink-faint); flex: 0 0 auto;
+  font-family: "IM Fell English SC", serif;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  flex: 0 0 auto;
 }
-.pop-links { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.pop-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
 .pop-link {
-  font-family: "IM Fell English", serif; font-size: 15px; cursor: pointer;
+  font-family: "IM Fell English", serif;
+  font-size: 15px;
+  cursor: pointer;
   background: color-mix(in srgb, var(--accent) 8%, var(--paper));
   border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--rule));
-  color: var(--accent); border-radius: 10px; padding: 1px 8px;
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 1px 8px;
 }
-.pop-link:hover { background: color-mix(in srgb, var(--accent) 18%, var(--paper)); }
-.pop-none { font-style: italic; color: var(--ink-faint); margin-top: 6px; font-size: 15px; }
+.pop-link:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--paper));
+}
+.pop-none {
+  font-style: italic;
+  color: var(--ink-faint);
+  margin-top: 6px;
+  font-size: 15px;
+}
 
 /* Sublabels under columns/cards */
 .sublabel {
-  display: inline-block; font-family: "IM Fell English SC", serif; letter-spacing: .18em;
-  font-size: 15px; color: var(--ink-faint); text-transform: uppercase;
+  display: inline-block;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.18em;
+  font-size: 15px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
   margin: 8px 0 2px;
 }
-.sublabel .ct { font-family: "IM Fell English", serif; font-style: italic; letter-spacing: 0; text-transform: none; color: var(--ink-faint); }
+.sublabel .ct {
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
 
 /* Surveyor's Ledger — derived health findings */
 .ledger-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 .ledger-find {
-  padding: 20px 26px 22px; border-right: 1px solid var(--rule);
+  padding: 20px 26px 22px;
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
-.ledger-find:nth-child(2n) { border-right: none; }
-.ledger-find:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
-.lf-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
-.lf-num { font-family: "IM Fell English", serif; font-size: 42px; line-height: 1; color: var(--accent); }
+.ledger-find:nth-child(2n) {
+  border-right: none;
+}
+/* No bottom border on the last grid row: the last panel, plus its left-hand
+   neighbour when the panel count is even (they share the final row). */
+.ledger-find:last-child,
+.ledger-find:nth-last-child(2):nth-child(odd) {
+  border-bottom: none;
+}
+.lf-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.lf-num {
+  font-family: "IM Fell English", serif;
+  font-size: 42px;
+  line-height: 1;
+  color: var(--accent);
+}
 .lf-cap {
-  font-family: "IM Fell English SC", serif; letter-spacing: .14em; text-transform: uppercase;
-  font-size: 15px; color: var(--ink-soft);
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 15px;
+  color: var(--ink-soft);
 }
-.lf-note { font-style: italic; color: var(--ink-soft); font-size: 16px; margin: 0 0 12px; }
+.lf-note {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 16px;
+  margin: 0 0 12px;
+}
 .lf-note code {
-  font-family: "JetBrains Mono", monospace; font-size: 13px; font-style: normal;
-  background: rgba(122,90,51,.12); padding: 0 4px; border-radius: 3px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-style: normal;
+  background: rgba(122, 90, 51, 0.12);
+  padding: 0 4px;
+  border-radius: 3px;
 }
-.lf-list { list-style: none; margin: 0; padding: 0; }
+.lf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .lf-list li {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
-  padding: 3px 0; border-bottom: 1px dotted color-mix(in srgb, var(--rule) 40%, transparent);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 3px 0;
+  border-bottom: 1px dotted color-mix(in srgb, var(--rule) 40%, transparent);
   font-size: 16px;
 }
-.lf-list li:last-child { border-bottom: none; }
-.lf-k { color: var(--ink); }
-.lf-k.k-skill   { color: var(--hue-skill); }
-.lf-k.k-command { color: var(--hue-command); }
-.lf-k.k-mcp     { color: var(--hue-mcp); }
-.lf-k.k-subagent{ color: var(--hue-subagent); }
-.lf-v { font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ink-faint); white-space: nowrap; }
-.lf-v.bad { color: var(--accent); font-weight: 600; }
-.lf-sub { color: var(--ink-faint); font-size: 14px; margin-left: 6px; }
+.lf-list li:last-child {
+  border-bottom: none;
+}
+.lf-k {
+  color: var(--ink);
+}
+.lf-k.k-skill {
+  color: var(--hue-skill);
+}
+.lf-k.k-command {
+  color: var(--hue-command);
+}
+.lf-k.k-mcp {
+  color: var(--hue-mcp);
+}
+.lf-k.k-subagent {
+  color: var(--hue-subagent);
+}
+.lf-v {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+.lf-v.bad {
+  color: var(--accent);
+  font-weight: 600;
+}
+.lf-sub {
+  color: var(--ink-faint);
+  font-size: 14px;
+  margin-left: 6px;
+}
 
 /* Expandable source rows — summary mimics a normal lf-list row, opening to a
    tray of the cold items it ships. */
-.lf-list li.lf-exp { display: block; padding: 0; }
-.lf-exp > details > summary {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
-  padding: 3px 0; cursor: pointer; list-style: none;
+.lf-list li.lf-exp {
+  display: block;
+  padding: 0;
 }
-.lf-exp > details > summary::-webkit-details-marker { display: none; }
-.lf-exp > details > summary .lf-k::before { content: "▸ "; color: var(--accent); }
-.lf-exp > details[open] > summary .lf-k::before { content: "▾ "; }
-.lf-exp > details > summary:hover .lf-k { text-decoration: underline; }
-.lf-exp > details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.lf-items { display: flex; flex-wrap: wrap; gap: 4px 6px; padding: 6px 0 8px 14px; }
+.lf-exp > details > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 3px 0;
+  cursor: pointer;
+  list-style: none;
+}
+.lf-exp > details > summary::-webkit-details-marker {
+  display: none;
+}
+.lf-exp > details > summary .lf-k::before {
+  content: "▸ ";
+  color: var(--accent);
+}
+.lf-exp > details[open] > summary .lf-k::before {
+  content: "▾ ";
+}
+.lf-exp > details > summary:hover .lf-k {
+  text-decoration: underline;
+}
+.lf-exp > details > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.lf-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  padding: 6px 0 8px 14px;
+}
 
 /* Contested rows stack the name above its origins so long paths stay readable */
-.lf-clash { flex-direction: column; align-items: stretch; gap: 5px; }
-.lf-clash .lf-k { font-weight: 600; font-size: 17px; }
-.lf-origins { display: flex; flex-wrap: wrap; gap: 5px 7px; }
-.lf-origin {
-  font-family: "JetBrains Mono", monospace; font-size: 13px; line-height: 1.5;
-  color: var(--ink-soft); background: rgba(122,90,51,.10);
-  border: 1px solid color-mix(in srgb, var(--rule) 45%, transparent);
-  border-radius: 4px; padding: 1px 7px;
+.lf-clash {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
 }
-.lf-more { font-style: italic; color: var(--ink-faint); font-size: 14px; padding-top: 8px; }
-.lf-hint { font-style: italic; color: var(--ink-soft); font-size: 15px; margin: 12px 0 0; }
-.lf-hint em { color: var(--accent); font-style: italic; }
+.lf-clash .lf-k {
+  font-weight: 600;
+  font-size: 17px;
+}
+.lf-origins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 7px;
+}
+.lf-origin {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  background: rgba(122, 90, 51, 0.1);
+  border: 1px solid color-mix(in srgb, var(--rule) 45%, transparent);
+  border-radius: 4px;
+  padding: 1px 7px;
+}
+.lf-more {
+  font-style: italic;
+  color: var(--ink-faint);
+  font-size: 14px;
+  padding-top: 8px;
+}
+.lf-hint {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 15px;
+  margin: 12px 0 0;
+}
+.lf-hint em {
+  color: var(--accent);
+  font-style: italic;
+}
 
 /* Expandable "how to clean" guidance */
-.lf-how { margin-top: 14px; border-top: 1px dashed var(--rule); padding-top: 10px; }
-.lf-how summary {
-  cursor: pointer; list-style: none;
-  font-family: "IM Fell English SC", serif; letter-spacing: .14em; text-transform: uppercase;
-  font-size: 13px; color: var(--accent);
+.lf-how {
+  margin-top: 14px;
+  border-top: 1px dashed var(--rule);
+  padding-top: 10px;
 }
-.lf-how summary::-webkit-details-marker { display: none; }
-.lf-how summary::before { content: "▸ "; color: var(--accent); }
-.lf-how[open] summary::before { content: "▾ "; }
-.lf-how summary:hover { text-decoration: underline; }
-.lf-how summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.lf-how ul { margin: 10px 0 0; padding-left: 18px; }
-.lf-how li { font-size: 15px; color: var(--ink-soft); margin: 0 0 6px; line-height: 1.45; }
-.lf-how p { font-size: 15px; color: var(--ink-soft); margin: 10px 0 0; line-height: 1.45; }
-.lf-how code, .lf-list code {
-  font-family: "JetBrains Mono", monospace; font-size: 13px; font-style: normal;
-  background: rgba(122,90,51,.12); padding: 0 4px; border-radius: 3px;
+.lf-how summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 13px;
+  color: var(--accent);
+}
+.lf-how summary::-webkit-details-marker {
+  display: none;
+}
+.lf-how summary::before {
+  content: "▸ ";
+  color: var(--accent);
+}
+.lf-how[open] summary::before {
+  content: "▾ ";
+}
+.lf-how summary:hover {
+  text-decoration: underline;
+}
+.lf-how summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.lf-how ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+.lf-how li {
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin: 0 0 6px;
+  line-height: 1.45;
+}
+.lf-how p {
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin: 10px 0 0;
+  line-height: 1.45;
+}
+.lf-how code,
+.lf-list code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-style: normal;
+  background: rgba(122, 90, 51, 0.12);
+  padding: 0 4px;
+  border-radius: 3px;
 }
 .lf-warn {
-  border-left: 2px solid var(--accent); padding-left: 10px;
-  color: var(--ink); font-style: italic;
+  border-left: 2px solid var(--accent);
+  padding-left: 10px;
+  color: var(--ink);
+  font-style: italic;
 }
 
 /* Per-source "used/total" badge on plugin & project heads */
 .use-badge {
-  font-family: "IM Fell English SC", serif; letter-spacing: .1em; text-transform: uppercase;
-  font-size: 12px; color: var(--ink-faint); border: 1px solid var(--rule);
-  border-radius: 9px; padding: 0 7px; white-space: nowrap;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--ink-faint);
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  padding: 0 7px;
+  white-space: nowrap;
 }
-.use-badge.none { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, var(--rule)); }
-.use-badge.full { color: var(--accent-2); border-color: color-mix(in srgb, var(--accent-2) 55%, var(--rule)); }
+.use-badge.none {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--rule));
+}
+.use-badge.full {
+  color: var(--accent-2);
+  border-color: color-mix(in srgb, var(--accent-2) 55%, var(--rule));
+}
 
 /* Regional plates */
 .region {
-  margin: 36px 0 0; padding-top: 16px; border-top: 1px solid var(--rule);
+  margin: 36px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
 }
 .region h2 {
-  font-family: "IM Fell English", serif; font-style: italic; font-size: 32px;
-  margin: 0 0 4px; color: var(--ink); letter-spacing: .02em;
-  display: flex; align-items: baseline; gap: 16px;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 32px;
+  margin: 0 0 4px;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
 }
 .region h2 .sub {
-  font-family: "IM Fell English SC", serif; font-style: normal; letter-spacing: .2em;
-  font-size: 15px; color: var(--ink-faint); margin-left: auto; text-transform: uppercase;
+  font-family: "IM Fell English SC", serif;
+  font-style: normal;
+  letter-spacing: 0.2em;
+  font-size: 15px;
+  color: var(--ink-faint);
+  margin-left: auto;
+  text-transform: uppercase;
 }
 .project-list {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
   margin-top: 14px;
 }
 .proj-card {
-  padding: 12px 16px; border: 1px solid var(--rule);
-  background: rgba(255,255,255,0.22); position: relative;
+  padding: 12px 16px;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.22);
+  position: relative;
 }
-.proj-card.empty { opacity: .7; }
-.proj-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
-.proj-path { font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--ink); font-weight: 500; }
+.proj-card.empty {
+  opacity: 0.7;
+}
+.proj-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.proj-path {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 500;
+}
 .proj-activity {
-  margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 15px;
-  color: var(--ink-faint); letter-spacing: .04em;
+  margin-left: auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
 }
 
 /* Standing context — the briefing a project loads at session start (marginal,
    on top of the global baseline strip). A separate axis from servitors, so it
    carries no kind hue: muted period ink, marginalia not chip. */
 .baseline-strip {
-  max-width: 1280px; margin: 14px auto 0; padding: 8px 12px;
-  font-style: italic; color: var(--ink-soft); font-size: 16px; text-align: center;
-  border-bottom: 1px solid var(--rule); border-bottom-style: dotted;
+  max-width: 1280px;
+  margin: 14px auto 0;
+  padding: 8px 12px;
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 16px;
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+  border-bottom-style: dotted;
 }
-.baseline-strip .orn { color: var(--rule); font-style: normal; margin-right: 4px; }
-.baseline-strip strong { font-style: normal; color: var(--ink); font-weight: 600; }
+.baseline-strip .orn {
+  color: var(--rule);
+  font-style: normal;
+  margin-right: 4px;
+}
+.baseline-strip strong {
+  font-style: normal;
+  color: var(--ink);
+  font-weight: 600;
+}
 
-.briefing { flex: 0 0 100%; margin-top: 2px; }
+.briefing {
+  flex: 0 0 100%;
+  margin-top: 2px;
+}
 .briefing > summary {
-  list-style: none; cursor: pointer; display: inline-flex; align-items: baseline;
-  flex-wrap: wrap; gap: 6px;
-  font-family: "IM Fell English", serif; font-style: italic;
-  font-size: 15px; color: var(--ink-faint);
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--ink-faint);
 }
-.briefing > summary::-webkit-details-marker { display: none; }
-.briefing > summary:hover { color: var(--ink-soft); }
-.briefing > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.briefing-stamp .orn { color: var(--rule); font-style: normal; }
+.briefing > summary::-webkit-details-marker {
+  display: none;
+}
+.briefing > summary:hover {
+  color: var(--ink-soft);
+}
+.briefing > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.briefing-stamp .orn {
+  color: var(--rule);
+  font-style: normal;
+}
 .briefing-tick {
-  font-family: "IM Fell English SC", serif; font-style: normal;
-  letter-spacing: .08em; text-transform: uppercase; font-size: 11px;
-  color: var(--ink-faint); border: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
-  border-radius: 8px; padding: 0 6px;
+  font-family: "IM Fell English SC", serif;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--ink-faint);
+  border: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+  border-radius: 8px;
+  padding: 0 6px;
 }
-.briefing[open] > summary { color: var(--ink-soft); }
-.briefing-list { margin: 6px 0 2px; padding-left: 14px; }
+.briefing[open] > summary {
+  color: var(--ink-soft);
+}
+.briefing-list {
+  margin: 6px 0 2px;
+  padding-left: 14px;
+}
 .briefing-src {
-  display: flex; align-items: baseline; gap: 8px;
-  font-size: 14px; color: var(--ink-soft);
-  padding: 1px 0; border-bottom: 1px dotted color-mix(in srgb, var(--rule) 35%, transparent);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink-soft);
+  padding: 1px 0;
+  border-bottom: 1px dotted color-mix(in srgb, var(--rule) 35%, transparent);
 }
-.briefing-src:last-child { border-bottom: none; }
-.briefing-src .bs-kind { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink); }
+.briefing-src:last-child {
+  border-bottom: none;
+}
+.briefing-src .bs-kind {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: var(--ink);
+}
 .briefing-src .bs-scope {
-  font-family: "IM Fell English SC", serif; letter-spacing: .1em; text-transform: uppercase;
-  font-size: 12px; color: var(--ink-faint);
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--ink-faint);
 }
-.briefing-src .bs-lines { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink-faint); }
+.briefing-src .bs-lines {
+  margin-left: auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
 
 /* Plugin marginalia inside cards */
 .plug {
-  margin: 6px 0; padding: 6px 8px 4px;
+  margin: 6px 0;
+  padding: 6px 8px 4px;
   border-left: 2px solid var(--ink-faint);
-  background: rgba(239,227,200,0.45);
+  background: rgba(239, 227, 200, 0.45);
 }
 .plug-head {
-  font-family: "IM Fell English", serif; font-size: 15px; color: var(--ink);
-  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font-family: "IM Fell English", serif;
+  font-size: 15px;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.plug-name { font-family: "JetBrains Mono", monospace; font-size: 15px; font-weight: 500; }
+.plug-name {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
+  font-weight: 500;
+}
 .plug-meta {
-  font-family: "JetBrains Mono", monospace; font-size: 15px; color: var(--ink-faint);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
+  color: var(--ink-faint);
 }
 .plug-status {
-  font-family: "IM Fell English SC", serif; letter-spacing: .14em; font-size: 15px;
-  text-transform: uppercase; padding: 1px 5px; border: 1px solid;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.14em;
+  font-size: 15px;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border: 1px solid;
 }
-.plug-status.s-active   { color: var(--accent-2); border-color: var(--accent-2); }
-.plug-status.s-archived { color: var(--ink-faint); border-color: var(--ink-faint); font-style: italic; }
+.plug-status.s-active {
+  color: var(--accent-2);
+  border-color: var(--accent-2);
+}
+.plug-status.s-archived {
+  color: var(--ink-faint);
+  border-color: var(--ink-faint);
+  font-style: italic;
+}
 
 .colophon {
-  margin: 48px 0 0; display: flex; justify-content: space-between; align-items: baseline;
-  font-family: "IM Fell English SC", serif; letter-spacing: .22em;
-  font-size: 15px; color: var(--ink-faint); text-transform: uppercase;
-  border-top: 1px solid var(--rule); padding-top: 14px;
+  margin: 48px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: "IM Fell English SC", serif;
+  letter-spacing: 0.22em;
+  font-size: 15px;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
 }
 .colophon em {
-  font-family: "IM Fell English", serif; font-style: italic; letter-spacing: 0;
-  text-transform: none; color: var(--ink-soft); font-size: 16px;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+  font-size: 16px;
 }
 
-.muted { color: var(--ink-faint); font-style: italic; font-size: 15px; }
+.muted {
+  color: var(--ink-faint);
+  font-style: italic;
+  font-size: 15px;
+}
 
 /* ── The Astrolabe (Ctrl+K finder) ───────────────────────────
    A modal sighting instrument: type a name, the readings narrow, Enter
@@ -578,144 +1313,363 @@ h1.title em { font-style: italic; color: var(--accent); }
    brass-and-parchment card floating over a darkened chart. */
 
 .astro-hint {
-  margin: 10px 0 0; font-family: "IM Fell English", serif; font-size: 17px;
-  color: var(--ink-faint); font-style: italic;
+  margin: 10px 0 0;
+  font-family: "IM Fell English", serif;
+  font-size: 17px;
+  color: var(--ink-faint);
+  font-style: italic;
 }
 .astro-hint kbd {
-  font-family: "JetBrains Mono", monospace; font-style: normal; font-size: 14px;
+  font-family: "JetBrains Mono", monospace;
+  font-style: normal;
+  font-size: 14px;
   background: color-mix(in srgb, var(--accent) 8%, var(--paper));
   border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--rule));
-  border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px;
-  color: var(--accent); letter-spacing: .04em;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: 1px 6px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
 }
 .astro-hint button {
-  font: inherit; background: none; border: 0; padding: 0; cursor: pointer;
-  color: var(--accent); text-decoration: underline dotted; text-underline-offset: 3px;
+  font: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--accent);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
 
 .astro-scrim {
-  position: fixed; inset: 0; z-index: 100; display: flex; justify-content: center;
-  align-items: flex-start; padding: 10vh 16px 16px; box-sizing: border-box;
-  background: rgba(28, 20, 10, .62); backdrop-filter: blur(2px);
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10vh 16px 16px;
+  box-sizing: border-box;
+  background: rgba(28, 20, 10, 0.62);
+  backdrop-filter: blur(2px);
 }
 .astro {
-  width: 100%; max-width: 640px; box-sizing: border-box;
+  width: 100%;
+  max-width: 640px;
+  box-sizing: border-box;
   background: radial-gradient(ellipse at 50% 0%, #f3e8cf 0%, var(--paper) 60%, var(--paper-2) 100%);
-  border: 1px solid var(--rule); border-radius: 10px;
-  box-shadow: 0 30px 90px rgba(0,0,0,.6), 0 0 0 6px rgba(122, 90, 51, .18);
-  display: flex; flex-direction: column; max-height: 74vh; overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.6),
+    0 0 0 6px rgba(122, 90, 51, 0.18);
+  display: flex;
+  flex-direction: column;
+  max-height: 74vh;
+  overflow: hidden;
 }
 .astro-head {
-  display: flex; align-items: baseline; gap: 10px; padding: 12px 16px 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 16px 8px;
   border-bottom: 1px solid color-mix(in srgb, var(--rule) 50%, transparent);
 }
 .astro-title {
-  font-family: "IM Fell English SC", serif; font-size: 16px; letter-spacing: .16em;
-  text-transform: uppercase; color: var(--ink-faint); white-space: nowrap;
+  font-family: "IM Fell English SC", serif;
+  font-size: 16px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
 }
-.astro-title .orn { color: var(--accent); letter-spacing: 0; }
+.astro-title .orn {
+  color: var(--accent);
+  letter-spacing: 0;
+}
 .astro-input {
-  flex: 1 1 auto; min-width: 0; font-family: "IM Fell English", serif; font-size: 22px;
-  color: var(--ink); background: transparent; border: 0; outline: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: "IM Fell English", serif;
+  font-size: 22px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  outline: none;
   padding: 2px 0;
 }
-.astro-input::placeholder { color: var(--ink-faint); font-style: italic; }
-.astro-list { overflow-y: auto; padding: 6px; margin: 0; list-style: none; }
+.astro-input::placeholder {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.astro-list {
+  overflow-y: auto;
+  padding: 6px;
+  margin: 0;
+  list-style: none;
+}
 .astro-row {
-  display: flex; align-items: baseline; gap: 10px; padding: 6px 10px;
-  border-radius: 6px; cursor: pointer; border: 1px solid transparent;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
 }
 .astro-row[aria-selected="true"] {
   background: color-mix(in srgb, var(--accent) 12%, var(--paper));
   border-color: color-mix(in srgb, var(--accent) 40%, var(--rule));
 }
-.astro-name { font-size: 18px; font-weight: 600; flex: 0 1 auto; }
-.astro-name.k-skill { color: var(--hue-skill); }
-.astro-name.k-command { color: var(--hue-command); }
-.astro-name.k-subagent { color: var(--hue-subagent); }
-.astro-name.k-mcp { color: var(--hue-mcp); }
-.astro-name.k-hook { color: var(--hue-hook); }
-.astro-name.k-project, .astro-name.k-region, .astro-name.k-plate { color: var(--ink); }
-.astro-name b { color: var(--accent); font-weight: 700; }
+.astro-name {
+  font-size: 18px;
+  font-weight: 600;
+  flex: 0 1 auto;
+}
+.astro-name.k-skill {
+  color: var(--hue-skill);
+}
+.astro-name.k-command {
+  color: var(--hue-command);
+}
+.astro-name.k-subagent {
+  color: var(--hue-subagent);
+}
+.astro-name.k-mcp {
+  color: var(--hue-mcp);
+}
+.astro-name.k-hook {
+  color: var(--hue-hook);
+}
+.astro-name.k-project,
+.astro-name.k-region,
+.astro-name.k-plate {
+  color: var(--ink);
+}
+.astro-name b {
+  color: var(--accent);
+  font-weight: 700;
+}
 .astro-kind {
-  font-family: "IM Fell English SC", serif; font-size: 13px; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--ink-faint); flex: 0 0 auto;
+  font-family: "IM Fell English SC", serif;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  flex: 0 0 auto;
 }
 .astro-where {
-  font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink-faint);
-  margin-left: auto; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: var(--ink-faint);
+  margin-left: auto;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.astro-empty { padding: 18px 16px; color: var(--ink-faint); font-style: italic; }
+.astro-empty {
+  padding: 18px 16px;
+  color: var(--ink-faint);
+  font-style: italic;
+}
 .astro-foot {
-  display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 16px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 8px 16px;
   border-top: 1px solid color-mix(in srgb, var(--rule) 50%, transparent);
-  font-family: "IM Fell English SC", serif; font-size: 13px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--ink-faint);
+  font-family: "IM Fell English SC", serif;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
 /* Sighting flash for non-chip targets (project cards, plates, regions) */
 @keyframes astro-sight {
-  0%, 100% { box-shadow: 0 0 0 0 transparent; }
-  20%      { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 40%, transparent); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  20% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
 }
-.astro-flash { animation: astro-sight 1.6s ease-out; border-radius: 6px; }
-.astro-flash:focus { outline: none; }
+.astro-flash {
+  animation: astro-sight 1.6s ease-out;
+  border-radius: 6px;
+}
+.astro-flash:focus {
+  outline: none;
+}
 
 /* ── Responsive ─────────────────────────────────────────────── */
 
 @media (max-width: 1100px) {
-  .page { padding: 48px 44px 60px; margin: 24px auto; }
-  h1.title { font-size: 60px; }
-  .subtitle { font-size: 19px; }
-  .gaz-grid { grid-template-columns: 1fr 1fr; }
-  .gaz-col:nth-child(2) { border-right: none; }
-  .gaz-col:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
-  .compass-legend { grid-template-columns: 1fr; }
+  .page {
+    padding: 48px 44px 60px;
+    margin: 24px auto;
+  }
+  h1.title {
+    font-size: 60px;
+  }
+  .subtitle {
+    font-size: 19px;
+  }
+  .gaz-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .gaz-col:nth-child(2) {
+    border-right: none;
+  }
+  .gaz-col:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--rule);
+  }
+  .compass-legend {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {
-  body { font-size: 16px; }
-  .page { padding: 28px 20px 40px; margin: 0 auto; box-shadow: none; }
-  .eyebrow { font-size: 15px; letter-spacing: .25em; }
-  h1.title { font-size: 40px; }
-  .subtitle { font-size: 16px; }
-  .rule-orn .line { flex-basis: 60px; }
+  body {
+    font-size: 16px;
+  }
+  .page {
+    padding: 28px 20px 40px;
+    margin: 0 auto;
+    box-shadow: none;
+  }
+  .eyebrow {
+    font-size: 15px;
+    letter-spacing: 0.25em;
+  }
+  h1.title {
+    font-size: 40px;
+  }
+  .subtitle {
+    font-size: 16px;
+  }
+  .rule-orn .line {
+    flex-basis: 60px;
+  }
 
-  .tally, .tally.tally-counts { grid-template-columns: 1fr 1fr; }
-  .tally > div { border-right: none; padding: 10px 4px; }
-  .tally > div:nth-child(odd) { border-right: 1px solid var(--rule); }
-  .tally .num { font-size: 42px; }
-  .tally.tally-counts .num, .tally.tally-stats .num { font-size: 30px; }
+  .tally,
+  .tally.tally-counts {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tally > div {
+    border-right: none;
+    padding: 10px 4px;
+  }
+  .tally > div:nth-child(odd) {
+    border-right: 1px solid var(--rule);
+  }
+  .tally .num {
+    font-size: 42px;
+  }
+  .tally.tally-counts .num,
+  .tally.tally-stats .num {
+    font-size: 30px;
+  }
 
-  .compass-wrap { flex-direction: column; gap: 16px; padding: 16px; }
-  .compass-svg { flex: 0 0 auto; max-width: 180px; }
+  .compass-wrap {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+  .compass-svg {
+    flex: 0 0 auto;
+    max-width: 180px;
+  }
 
-  .plate-title { font-size: 28px; }
-  .plate-title .sub { font-size: 17px; display: block; margin-top: 2px; }
-  .plate-note { font-size: 16px; }
+  .plate-title {
+    font-size: 28px;
+  }
+  .plate-title .sub {
+    font-size: 17px;
+    display: block;
+    margin-top: 2px;
+  }
+  .plate-note {
+    font-size: 16px;
+  }
 
-  .gaz-grid { grid-template-columns: 1fr; }
-  .gaz-col { border-right: none; border-bottom: 1px solid var(--rule); padding: 18px 16px; }
-  .gaz-col:last-child { border-bottom: none; }
+  .gaz-grid {
+    grid-template-columns: 1fr;
+  }
+  .gaz-col {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    padding: 18px 16px;
+  }
+  .gaz-col:last-child {
+    border-bottom: none;
+  }
 
-  .ledger-grid { grid-template-columns: 1fr; }
-  .ledger-find { border-right: none; border-bottom: 1px solid var(--rule); }
-  .ledger-find:last-child { border-bottom: none; }
-  .lf-origins { text-align: left; }
+  .ledger-grid {
+    grid-template-columns: 1fr;
+  }
+  .ledger-find {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+  /* Single column: only the true last panel drops its border — re-add the one
+     the desktop last-row rule removed from a mid-column panel. */
+  .ledger-find:nth-last-child(2):nth-child(odd) {
+    border-bottom: 1px solid var(--rule);
+  }
+  .ledger-find:last-child {
+    border-bottom: none;
+  }
+  .lf-origins {
+    text-align: left;
+  }
 
-  .region h2 { font-size: 24px; }
-  .region h2 .sub { display: block; margin: 4px 0 0; font-size: 15px; }
-  .project-list { grid-template-columns: 1fr; gap: 12px; }
-  .proj-head { flex-wrap: wrap; }
-  .proj-activity { margin-left: 0; flex-basis: 100%; }
+  .region h2 {
+    font-size: 24px;
+  }
+  .region h2 .sub {
+    display: block;
+    margin: 4px 0 0;
+    font-size: 15px;
+  }
+  .project-list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .proj-head {
+    flex-wrap: wrap;
+  }
+  .proj-activity {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
 
-  .colophon { flex-direction: column; gap: 6px; text-align: center; letter-spacing: .14em; }
-  .chip { font-size: 15px; }
+  .colophon {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+    letter-spacing: 0.14em;
+  }
+  .chip {
+    font-size: 15px;
+  }
 }
 
 @media (max-width: 420px) {
-  .page { padding: 20px 14px 32px; }
-  h1.title { font-size: 32px; }
-  .tally, .tally.tally-counts { grid-template-columns: 1fr; }
-  .tally > div:nth-child(odd) { border-right: none; }
+  .page {
+    padding: 20px 14px 32px;
+  }
+  h1.title {
+    font-size: 32px;
+  }
+  .tally,
+  .tally.tally-counts {
+    grid-template-columns: 1fr;
+  }
+  .tally > div:nth-child(odd) {
+    border-right: none;
+  }
 }
