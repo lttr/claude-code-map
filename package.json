@@ -37,7 +37,7 @@
     "check": "vp check",
     "test": "vp test run",
     "prepack": "pnpm run build",
-    "release": "vp check && changelogen --release --push && pnpm publish",
+    "release": "vp check && changelogen --release --push --noAuthors && pnpm publish",
     "prepare": "vp config"
   },
   "devDependencies": {
