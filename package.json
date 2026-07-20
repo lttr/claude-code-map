@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "start": "node bin/cli.ts",
+    "dev": "node --watch bin/cli.ts",
     "check": "vp check",
     "test": "vp test run",
     "release": "vp check && changelogen --release --push",

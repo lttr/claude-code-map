@@ -4,6 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { collect } from "../src/collect.ts";
+import { injectClientScripts } from "../src/inline-scripts.ts";
 import { renderAtlas, renderFullPage } from "../src/render.ts";
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -58,7 +59,11 @@ async function main() {
     const t0 = Date.now();
     const [shell, css, result] = await Promise.all([loadShell(), loadCss(), collect()]);
     const atlas = renderAtlas(result);
-    const html = renderFullPage(shell, css, atlas);
+    const html = renderFullPage(
+      await injectClientScripts(shell, { runtimeFetch: false }),
+      css,
+      atlas,
+    );
     await writeFile(args.outPath, html);
     const t = result.tally;
     console.log(`wrote ${args.outPath} (${Date.now() - t0}ms)`);
@@ -73,7 +78,7 @@ async function main() {
     const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
     try {
       if (url.pathname === "/" || url.pathname === "/index.html") {
-        const shell = await loadShell();
+        const shell = await injectClientScripts(await loadShell(), { runtimeFetch: true });
         res.writeHead(200, {
           "Content-Type": "text/html; charset=utf-8",
           "Cache-Control": "no-store",

@@ -8,6 +8,7 @@ import type {
   PluginInfo,
   ProjectContext,
   ProjectInfo,
+  WiringIssue,
 } from "./collect.ts";
 import { loadedContextLines } from "./collect.ts";
 
@@ -82,7 +83,7 @@ function chip(item: Item): string {
     ` data-name="${esc(item.name.toLowerCase())}" data-label="${esc(item.name)}" data-kind="${item.kind}"` +
     ` data-loc="${esc(item.location)}"${usageLine ? ` data-usage="${esc(usageLine)}"` : ""}${extra ? ` data-extra="${esc(extra)}"` : ""}` +
     `${out.length ? ` data-out="${esc(out.join(","))}"` : ""}${inn.length ? ` data-in="${esc(inn.join(","))}"` : ""}${item.contested ? ` data-contested="1"` : ""}${item.contestedWith?.length ? ` data-contested-with="${esc(item.contestedWith.join("; "))}"` : ""}` +
-    `${item.invocation === "user-only" ? ` data-inv="☞ user-invoked only — disable-model-invocation: true"` : ""}${item.invocation === "model-only" ? ` data-inv="✳ model-invoked only (no slash command) — user-invocable: false"` : ""}`;
+    `${item.invocation === "user-only" ? ` data-inv="/${esc(item.name)} — user-invoked only, disable-model-invocation: true"` : ""}${item.invocation === "model-only" ? ` data-inv="✳ model-invoked only (no slash command) — user-invocable: false"` : ""}`;
   const ext =
     item.kind === "mcp" && item.transport ? `<span class="ext">${esc(item.transport)}</span>` : "";
   // Route marker, revealed only in relations mode: →n outgoing, ←n incoming.
@@ -315,6 +316,27 @@ function ledgerPlate(result: CollectResult): string {
       ? `<div class="lf-more">+ ${groups.length - cShown.length} more contested name${groups.length - cShown.length === 1 ? "" : "s"}</div>`
       : "";
 
+  // Frayed lines — declared wiring whose far end doesn't exist
+  const ISSUE_LABEL: Record<WiringIssue["issue"], string> = {
+    "hook-script": "hook → missing script",
+    binary: "binary not on PATH",
+    import: "unresolved @import",
+    phantom: "phantom reference",
+  };
+  const wiring = result.wiring;
+  const wShown = wiring.slice(0, 10);
+  const wRows = wShown
+    .map(
+      (w) =>
+        `<li class="lf-clash"><span class="lf-k">${w.fromKind === "hook" ? esc(w.from) : flashLink(w.from, w.fromKind)}<span class="lf-sub">· ${esc(ISSUE_LABEL[w.issue])}</span></span>` +
+        `<span class="lf-origins"><span class="lf-origin">${esc(w.detail)}</span><span class="lf-origin">${esc(w.where)}</span></span></li>`,
+    )
+    .join("");
+  const wMore =
+    wiring.length > wShown.length
+      ? `<div class="lf-more">+ ${wiring.length - wShown.length} more frayed line${wiring.length - wShown.length === 1 ? "" : "s"}</div>`
+      : "";
+
   // Attrition / cruft
   const archived = archivedPlugins(result);
   const cruftRows = [
@@ -358,6 +380,19 @@ function ledgerPlate(result: CollectResult): string {
         <details class="lf-how">
           <summary>How to resolve</summary>
           <p>Rename or remove one of the listed origins so the token resolves to a single item. More-local scope generally wins (project &gt; user &gt; plugin), but confirm which actually fires before relying on it — invoke it once and check the map's heat.</p>
+        </details>
+      </div>
+      <div class="ledger-find">
+        <div class="lf-head"><span class="lf-num">${wiring.length}</span><span class="lf-cap">frayed lines</span></div>
+        <p class="lf-note">Declared wiring whose far end doesn't exist: hook scripts, <code>allowed-tools</code> binaries, <code>@imports</code>, and namespaced <code>/plugin:command</code> mentions that resolve to nothing known. Static checks only — nothing was executed.</p>
+        <ul class="lf-list">${wRows || `<li class="muted">— every declared line holds</li>`}</ul>${wMore}
+        <details class="lf-how">
+          <summary>How to mend</summary>
+          <ul>
+            <li><strong>Missing script / import</strong> — the file moved or was deleted; fix the path in the hook entry or body, or restore the file.</li>
+            <li><strong>Binary not on PATH</strong> — install it, or drop the <code>Bash(…)</code> entry if the skill no longer shells out to it. Checked against this process's PATH — a shell-only PATH addition can read as missing.</li>
+            <li><strong>Phantom reference</strong> — the mentioned item was renamed or removed; update the mention. Only backticked <code>/ns:slug</code> forms are scanned (plain <code>/slug</code> collides with URL routes), so a documentation example can still show up here falsely.</li>
+          </ul>
         </details>
       </div>
       <div class="ledger-find">
@@ -429,7 +464,7 @@ function compassPlate(): string {
         <div class="leg-group">
           <p class="leg-head">Marks</p>
           <span class="leg-sample"><span class="chip k-skill r-warm contested">name</span></span><span class="leg-desc">contested · 2+ items share this name</span>
-          <span class="leg-sample"><span class="chip k-skill r-warm inv-user">name</span></span><span class="leg-desc">user-invoked only · Claude can't trigger it</span>
+          <span class="leg-sample"><span class="chip k-skill r-warm inv-user">name</span></span><span class="leg-desc">user-invoked only · drawn as the /slash it's typed with</span>
           <span class="leg-sample"><span class="chip k-skill r-warm inv-model">name</span></span><span class="leg-desc">model-invoked only · no slash command</span>
         </div>
       </div>
@@ -459,7 +494,7 @@ function relationsPlate(result: CollectResult): string {
     <h2 class="plate-title">Relations <span class="sub">· declared references</span>
       <label class="rel-knob"><input type="checkbox" id="rel-toggle"><span class="rel-knob-track"></span><span class="rel-knob-label">show routes</span></label>
     </h2>
-    <p class="plate-note">Static scrape of skill &amp; command bodies for <code>/slug</code> and <code>\`slug\`</code> mentions that resolve to a known item. ${rels.length} edge${rels.length === 1 ? "" : "s"}; usage not consulted. Both ends are tinted by kind (<span class="amb-key" style="color:var(--hue-skill)">skill</span> · <span class="amb-key" style="color:var(--hue-command)">command</span>, see compass). <span class="amb-key amb">name?</span> = contested target.</p>
+    <p class="plate-note">Static scrape of skill, command &amp; subagent bodies for <code>/slug</code> and <code>\`slug\`</code> mentions that resolve to a known item. ${rels.length} edge${rels.length === 1 ? "" : "s"}; usage not consulted. Both ends are tinted by kind (<span class="amb-key" style="color:var(--hue-skill)">skill</span> · <span class="amb-key" style="color:var(--hue-command)">command</span> · <span class="amb-key" style="color:var(--hue-subagent)">subagent</span>, see compass). <span class="amb-key amb">name?</span> = contested target.</p>
     <div class="rel-body">${rels.length ? rows : `<div class="muted">— no declared references found</div>`}</div>
   </section>`;
 }
@@ -646,19 +681,5 @@ export function renderFullPage(shellHtml: string, css: string, atlasFragment: st
     /<div id="atlas" class="atlas atlas-loading">[\s\S]*?<\/div>\s*(?=<footer)/,
     `<div id="atlas" class="atlas">${atlasFragment}</div>\n  `,
   );
-  // Drop the runtime fetch script — atlas is already inlined.
-  out = out.replace(/<script>\s*\(function \(\) \{[\s\S]*?\}\)\(\);[\s\S]*?<\/script>/, () => {
-    // Keep only the date-stamp portion of the inline script.
-    return `<script>
-  (function () {
-    var fmt = new Intl.DateTimeFormat(undefined, { year: "numeric", month: "long", day: "numeric" });
-    var now = new Date();
-    var stamp = document.getElementById("date-stamp");
-    if (stamp) stamp.textContent = "the " + fmt.format(now);
-    var col = document.getElementById("colophon-date");
-    if (col) col.textContent = fmt.format(now);
-  })();
-</script>`;
-  });
   return out;
 }
