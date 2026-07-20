@@ -41,6 +41,9 @@ Second pillar next to servitors. Where a servitor is *invokable*, standing conte
 - **Regional plate** — one plate per parent directory of projects (any workspace root). Holds project cards inside that region, sorted by activity.
 - **Province / Region** — parent-directory grouping of projects. Synonym for what a regional plate covers.
 - **Project card** — one card on a regional plate, listing that project's local items, scoped plugins, and activity stamp.
+- **Astrolabe** — the <kbd>Ctrl</kbd>+<kbd>K</kbd> finder. A modal that fuzzy-matches every **landmark** on the page and sails to the chosen one.
+- **Landmark** — anything the astrolabe can sight: a servitor chip, a project card, a region, or a plate. Indexed from the rendered DOM, not from the collector.
+- **Sail / take a bearing** — the astrolabe's navigation act: scroll the landmark into view, flash it, and move focus to it.
 
 ## Visual vocabulary
 

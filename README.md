@@ -9,6 +9,7 @@ An interactive **cartographer's atlas** of your Claude Code setup. It scans `~/.
 - **Contested names** — invocation tokens that resolve to two or more implementations (e.g. a global skill `verify` and a plugin command `/verify`).
 - **Invocation marks** — ☞ user-invoked only (`disable-model-invocation: true`), ✳ model-invoked only (`user-invocable: false`), scraped from skill/command frontmatter.
 - **Regional plates** — one map plate per workspace region, with a project card per project sorted by activity.
+- **The Astrolabe** (<kbd>Ctrl</kbd>+<kbd>K</kbd>) — a sighting instrument: type to fuzzy-find any servitor, project, region or plate; <kbd>Enter</kbd> sails the page to it and flashes the target.
 
 ## Usage
 
