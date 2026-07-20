@@ -28,11 +28,11 @@ Derived findings — what the map says once you stop reading it as a map: never-
 
 ## Usage
 
-Requires Node ≥ 23.6 (uses native TypeScript execution).
+Requires Node ≥ 20.
 
 ```sh
 # Serve the live atlas (rebuilds on each refresh)
-node bin/cli.ts
+npx @lttr/claude-code-map
 
 # → http://127.0.0.1:7777/
 ```
@@ -40,7 +40,7 @@ node bin/cli.ts
 Render once to a static HTML file:
 
 ```sh
-node bin/cli.ts --out atlas.html
+npx @lttr/claude-code-map --out atlas.html
 ```
 
 ### Options
@@ -59,3 +59,24 @@ node bin/cli.ts --out atlas.html
 3. `bin/cli.ts` either serves them over HTTP or writes a single self-contained page.
 
 The atlas speaks in a cartographer's voice. Shared vocabulary (servitor, plate, heat, landmark, contested name, …) lives in [`GLOSSARY.md`](./GLOSSARY.md).
+
+## Development
+
+Requires Node ≥ 23.6 (dev mode runs the TypeScript sources directly via native type stripping).
+
+```sh
+pnpm install
+pnpm run dev     # serve with watch/restart
+pnpm run check   # format + lint + typecheck
+pnpm run build   # emit plain-JS package to dist/
+```
+
+Commit messages follow [conventional commits](https://www.conventionalcommits.org) (`feat: …`, `fix(scope): …`), enforced by a commit-msg hook and consumed by [changelogen](https://github.com/unjs/changelogen) for versioning and the changelog.
+
+### Releasing
+
+```sh
+pnpm run release
+```
+
+Runs checks, bumps the version from commit history, writes `CHANGELOG.md`, commits, tags, pushes, and publishes to npm (the build runs via `prepack`).

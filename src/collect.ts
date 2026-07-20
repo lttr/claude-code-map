@@ -205,7 +205,11 @@ async function readJSON<T = any>(path: string): Promise<T | undefined> {
 
 async function run(cmd: string, args: string[]): Promise<string> {
   try {
-    const { stdout, stderr } = await pExecFile(cmd, args, { maxBuffer: 32 * 1024 * 1024 });
+    // shell:true on Windows so npm .cmd shims (like `claude`) resolve.
+    const { stdout, stderr } = await pExecFile(cmd, args, {
+      maxBuffer: 32 * 1024 * 1024,
+      shell: process.platform === "win32",
+    });
     return stdout + stderr;
   } catch (e: any) {
     return (e?.stdout ?? "") + (e?.stderr ?? "");
@@ -652,52 +656,48 @@ async function readInstalledPlugins(): Promise<PluginInstall[]> {
 
 async function scanProjectAndPluginMcps(installs: PluginInstall[]): Promise<RawMcp[]> {
   const out: RawMcp[] = [];
-  const fd = await run("fd", ["-H", "-t", "f", "\\.mcp\\.json$", HOME, "--max-depth", "8"]);
-  const byPath = new Map<string, PluginInstall>();
-  for (const i of installs) byPath.set(i.installPath, i);
-  // Match plugin source roots: ~/.claude/plugins/{cache,marketplaces}/ are the documented locations
-  // (https://code.claude.com/docs/en/discover-plugins); `marketplaces` and `claude-marketplace/plugins`
-  // catch nested marketplace checkouts that ship plugins alongside a marketplace.json.
-  const PLUGIN_SRC =
-    /\/(marketplaces|claude-marketplace\/plugins|\.claude\/plugins\/(cache|marketplaces))\//;
 
-  for (const path of fd.split("\n").filter(Boolean)) {
-    const dir = path.replace(/\/\.mcp\.json$/, "");
-    const isPluginSrc = PLUGIN_SRC.test(path);
-    const data = await readJSON<any>(path);
+  // Plugin-shipped MCP config lives at <installPath>/.mcp.json
+  // (https://code.claude.com/docs/en/plugins).
+  for (const inst of installs) {
+    const data = await readJSON<any>(join(inst.installPath, ".mcp.json"));
     const servers = data?.mcpServers ?? {};
     if (Object.keys(servers).length === 0) continue;
+    const scopeKey = inst.scope === "user" ? "__user__" : (inst.projectPath ?? "__user__");
+    const ep = await enabledPluginsAt(scopeKey);
+    if (!ep.has(inst.id)) continue;
+    for (const [name, cfg] of Object.entries<any>(servers)) {
+      out.push({
+        name,
+        location: inst.scope === "user" ? "user-plugin" : "scoped-plugin",
+        pluginId: inst.id,
+        pluginName: inst.name,
+        pluginMarketplace: inst.marketplace,
+        pluginInstallPath: inst.installPath,
+        pluginScope: inst.scope,
+        projectPath: inst.scope === "project" ? inst.projectPath : undefined,
+        transport: "plugin",
+        url: cfg?.url,
+      });
+    }
+  }
 
-    if (isPluginSrc) {
-      const inst = byPath.get(dir);
-      if (!inst) continue;
-      const scopeKey = inst.scope === "user" ? "__user__" : (inst.projectPath ?? "__user__");
-      const ep = await enabledPluginsAt(scopeKey);
-      if (!ep.has(inst.id)) continue;
-      for (const [name, cfg] of Object.entries<any>(servers)) {
-        out.push({
-          name,
-          location: inst.scope === "user" ? "user-plugin" : "scoped-plugin",
-          pluginId: inst.id,
-          pluginName: inst.name,
-          pluginMarketplace: inst.marketplace,
-          pluginInstallPath: inst.installPath,
-          pluginScope: inst.scope,
-          projectPath: inst.scope === "project" ? inst.projectPath : undefined,
-          transport: "plugin",
-          url: cfg?.url,
-        });
-      }
-    } else {
-      for (const [name, cfg] of Object.entries<any>(servers)) {
-        out.push({
-          name,
-          location: "project-mcp",
-          projectPath: dir,
-          transport: cfg?.type ?? (cfg?.command ? "stdio" : cfg?.url ? "http" : "project"),
-          url: cfg?.url,
-        });
-      }
+  // Project-scope <proj>/.mcp.json for every project Claude Code has opened,
+  // taken from the ~/.claude.json projects map.
+  const projects = Object.keys((await readJSON<any>(CLAUDE_JSON))?.projects ?? {});
+  const installPaths = new Set(installs.map((i) => i.installPath));
+  for (const dir of projects) {
+    if (installPaths.has(dir)) continue;
+    const data = await readJSON<any>(join(dir, ".mcp.json"));
+    const servers = data?.mcpServers ?? {};
+    for (const [name, cfg] of Object.entries<any>(servers)) {
+      out.push({
+        name,
+        location: "project-mcp",
+        projectPath: dir,
+        transport: cfg?.type ?? (cfg?.command ? "stdio" : cfg?.url ? "http" : "project"),
+        url: cfg?.url,
+      });
     }
   }
   return out;

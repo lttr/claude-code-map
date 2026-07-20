@@ -1,26 +1,54 @@
 {
-  "name": "claude-code-map",
-  "private": true,
-  "bin": {
-    "claude-code-map": "./bin/cli.ts"
+  "name": "@lttr/claude-code-map",
+  "version": "0.0.0",
+  "description": "Interactive local atlas of your Claude Code setup — skills, commands, subagents, MCP servers, plugins, hooks and how often you actually use them.",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "cli",
+    "mcp",
+    "plugins",
+    "skills",
+    "subagents",
+    "visualization"
+  ],
+  "homepage": "https://github.com/lttr/claude-code-map#readme",
+  "bugs": "https://github.com/lttr/claude-code-map/issues",
+  "license": "MIT",
+  "author": "Lukas Trumm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lttr/claude-code-map.git"
   },
+  "bin": {
+    "claude-code-map": "./dist/bin/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "start": "node bin/cli.ts",
     "dev": "node --watch bin/cli.ts",
+    "build": "tsc -p tsconfig.build.json && node scripts/build-assets.mjs",
     "check": "vp check",
     "test": "vp test run",
-    "release": "vp check && changelogen --release --push",
+    "prepack": "pnpm run build",
+    "release": "vp check && changelogen --release --push && pnpm publish",
     "prepare": "vp config"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
     "changelogen": "^0.6.2",
+    "typescript": "^7.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:"
   },
   "engines": {
-    "node": ">=23.6"
+    "node": ">=20"
   },
   "packageManager": "pnpm@11.6.0"
 }
