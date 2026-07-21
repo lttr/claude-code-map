@@ -4,5 +4,5 @@ CLI that scans `~/.claude` and serves an interactive atlas of skills, commands, 
 
 - `pnpm run dev` — serve with watch; `check` — lint+typecheck; `build` — plain-JS `dist/`; `release` — publish
 - Flow: `src/collect.ts` (scan) → `src/render.ts` (HTML) → `bin/cli.ts` (serve or `--out`)
-- Conventional commits (hook-enforced). Domain vocabulary in `GLOSSARY.md` — use it.
+- Conventional commits (changelogen types: feat fix perf refactor docs build types chore test style ci examples). Domain vocabulary in `GLOSSARY.md` — use it.
 - Stay OS-agnostic: no shelling out to tools that may not exist, paths via `node:path`
