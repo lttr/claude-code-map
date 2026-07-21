@@ -71,6 +71,12 @@ pnpm run check   # format + lint + typecheck
 pnpm run build   # emit plain-JS package to dist/
 ```
 
+### Client scripts
+
+Browser-side code lives in `src/client/*.ts` and is **inlined** into the page, not linked. `src/shell.html` carries `<!-- script:name -->` markers; `src/inline-scripts.ts` replaces each with an inline `<script>` whose body is the matching client file — pre-stripped `.js` when present (the published build), otherwise the `.ts` source stripped on the fly via Node's `stripTypeScriptTypes`. Stripping is blank-preserving, so devtools line numbers match the TS source.
+
+Why not a bundler or plain `<script src>` links: `--out` must emit one self-contained file, so the inliner has to exist regardless — linking would only add a second delivery mechanism (script routes plus a second shell variant) whose sole benefit, browser caching, is worthless for a localhost tool. The constraint is that client scripts stay dependency-free vanilla TS: no imports, no npm packages. If they ever need those, swap `loadClientScript` for an esbuild call; the marker seam stays.
+
 Commit messages follow [conventional commits](https://www.conventionalcommits.org) (`feat: …`, `fix(scope): …`), enforced by a commit-msg hook and consumed by [changelogen](https://github.com/unjs/changelogen) for versioning and the changelog.
 
 ### Releasing
