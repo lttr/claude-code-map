@@ -53,6 +53,8 @@ function chipAria(item: Item): string {
   parts.push(`${u.total} invocation${u.total === 1 ? "" : "s"} total`);
   parts.push(`last used ${last}`);
   parts.push(`${u.d7} in 7 days, ${u.d30} in 30 days`);
+  if (!u.total && item.usageAnywhere.total)
+    parts.push(`${item.usageAnywhere.total} invocations from other working directories`);
   if (item.refsOut?.length) parts.push(`depends on ${item.refsOut.join(", ")}`);
   if (item.refsIn?.length) parts.push(`used by ${item.refsIn.join(", ")}`);
   return parts.join(", ");
@@ -69,10 +71,14 @@ function chip(item: Item): string {
   const u = item.usage;
   const lastTxt = u.last ? new Date(u.last * 1000).toISOString().slice(0, 10) : "never";
   // Detail shown in the click popover, carried as data-* (no clunky native title).
+  // A project-scoped item can be invoked from another cwd; say so rather than
+  // leaving a bare "total 0" that reads as dead.
+  const elsewhere = !u.total && item.usageAnywhere.total ? item.usageAnywhere.total : 0;
   const usageLine =
     item.kind === "hook"
       ? ""
-      : `7d ${u.d7} · 30d ${u.d30} · 90d ${u.d90} · total ${u.total} · last ${lastTxt}`;
+      : `7d ${u.d7} · 30d ${u.d30} · 90d ${u.d90} · total ${u.total} · last ${lastTxt}` +
+        (elsewhere ? ` · ${elsewhere} elsewhere` : "");
   const extra =
     item.kind === "hook"
       ? "passive — fires on this event, not invocation-counted"
@@ -143,9 +149,11 @@ function tallyRow(rowClass: string, cells: { num: number | string; lbl: string }
 // them — otherwise they'd read as dead code.
 const counted = (items: Item[]): Item[] => items.filter((i) => i.kind !== "hook");
 
+// "Used" means used at all, anywhere — a project-scoped plugin skill invoked from
+// a sibling repo is not dead weight, it is just attributed elsewhere.
 function usageFrac(items: Item[]): { used: number; total: number } {
   const c = counted(items);
-  return { used: c.filter((i) => i.usage.total > 0).length, total: c.length };
+  return { used: c.filter((i) => i.usageAnywhere.total > 0).length, total: c.length };
 }
 
 // Small "used/total" badge for a plugin or project's installed surface. Empty when
@@ -182,11 +190,19 @@ function deadBySource(result: CollectResult): DeadSource[] {
     string,
     { dead: number; total: number; items: { name: string; kind: Kind }[] }
   >();
+  // One plugin can be installed into several projects; each install re-ships the
+  // same names. Count a name once per source, or the row reads "15/18" with every
+  // skill listed twice.
+  const seen = new Map<string, Set<string>>();
   const add = (label: string, items: Item[]) => {
     for (const it of counted(items)) {
+      if (!seen.has(label)) seen.set(label, new Set());
+      const key = `${it.kind}:${it.name.toLowerCase()}`;
+      if (seen.get(label)!.has(key)) continue;
+      seen.get(label)!.add(key);
       const e = roll.get(label) ?? { dead: 0, total: 0, items: [] };
       e.total++;
-      if (it.usage.total === 0) {
+      if (it.usageAnywhere.total === 0) {
         e.dead++;
         e.items.push({ name: it.name, kind: it.kind });
       }
@@ -263,7 +279,7 @@ function flashLink(name: string, kind?: Kind): string {
 function ledgerPlate(result: CollectResult): string {
   const all = flattenItems(result);
   const countedAll = counted(all);
-  const deadCount = countedAll.filter((i) => i.usage.total === 0).length;
+  const deadCount = countedAll.filter((i) => i.usageAnywhere.total === 0).length;
   const totalCount = countedAll.length;
 
   // Dead weight by source

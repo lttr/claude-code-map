@@ -65,6 +65,11 @@ export interface Item {
   transport?: string;
   url?: string;
   usage: UsageBuckets;
+  // Same item counted across every transcript, ignoring project attribution. For
+  // global/user items it equals `usage`; for project-scoped ones it also catches
+  // invocations made from another cwd (a sibling repo, a subdirectory, a worktree),
+  // so "never invoked" means never — not "never here".
+  usageAnywhere: UsageBuckets;
   recency: Recency;
   contested: boolean;
   // When contested, the other origins (kind · place) that share this name.
@@ -1146,6 +1151,21 @@ async function scanBaseline(): Promise<ContextSource[]> {
 
 // ---------- main collect ----------
 
+function dedupeBy<T>(xs: T[], key: (x: T) => string): T[] {
+  const seen = new Set<string>();
+  return xs.filter((x) => {
+    const k = key(x);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+// Identity of one plugin install: same version installed into two projects (or
+// user + project) are distinct installs with distinct usage and distinct homes.
+const installKey = (installPath: string, scope: "user" | "project", projectPath?: string): string =>
+  `${installPath}|${scope}|${projectPath ?? ""}`;
+
 export async function collect(): Promise<CollectResult> {
   enabledPluginsCache.clear();
   folderToCwdCache.clear();
@@ -1155,14 +1175,24 @@ export async function collect(): Promise<CollectResult> {
 
   const usage = await buildUsage();
   const marketplaces = await readMarketplaces();
-  const installs = await readInstalledPlugins();
+  // Claude Code can record the same install twice (scope "local" and "project"
+  // for one dir); they describe one plugin in one place, so keep the first.
+  const installs = dedupeBy(await readInstalledPlugins(), (i) =>
+    installKey(i.installPath, i.scope, i.projectPath),
+  );
 
   // Resolve plugin status for each install; drop orphaned/removed — they're gone.
+  // Keyed per install, not per installPath: the same plugin version can be
+  // installed into several scopes/projects at once (Claude Code records one entry
+  // per scope, incl. both "local" and "project" for the same dir). Collapsing them
+  // onto the install path merged their items into one bucket — duplicate names,
+  // usage resolved against the wrong project, and every project but the last one
+  // losing the plugin entirely.
   const installInfo: Map<string, PluginInfo> = new Map();
   for (const inst of installs) {
     const st = pluginStatus(inst.name, inst.marketplace, inst.installPath, marketplaces);
     if (st.status === "orphaned" || st.status === "removed") continue;
-    installInfo.set(inst.installPath, {
+    installInfo.set(installKey(inst.installPath, inst.scope, inst.projectPath), {
       id: inst.id,
       name: inst.name,
       marketplace: inst.marketplace,
@@ -1200,6 +1230,9 @@ export async function collect(): Promise<CollectResult> {
       usage,
       rec.location,
     );
+    const anywhere = rec.projectPath
+      ? lookupUsage(rec.name, rec.kind, rec.pluginName, undefined, usage, rec.location)
+      : usageBuckets;
     return {
       kind: rec.kind,
       name: rec.name,
@@ -1215,6 +1248,7 @@ export async function collect(): Promise<CollectResult> {
       transport: rec.transport,
       url: rec.url,
       usage: usageBuckets,
+      usageAnywhere: anywhere,
       recency: recencyOf(usageBuckets),
       contested: false,
     };
@@ -1242,7 +1276,7 @@ export async function collect(): Promise<CollectResult> {
 
   // Plugin items (skills/commands/agents) for each install
   for (const inst of installs) {
-    const info = installInfo.get(inst.installPath);
+    const info = installInfo.get(installKey(inst.installPath, inst.scope, inst.projectPath));
     if (!info) continue;
     const loc: Location = inst.scope === "user" ? "user-plugin" : "scoped-plugin";
     const sk = await listDir(join(inst.installPath, "skills"));
@@ -1291,12 +1325,12 @@ export async function collect(): Promise<CollectResult> {
   const projectMcpsByPath = new Map<string, Item[]>();
   for (const r of [...localMcpsRaw, ...projAndPluginMcpsRaw]) {
     if (r.location === "user-plugin") {
-      const info = installInfo.get(r.pluginInstallPath!);
+      const info = installInfo.get(installKey(r.pluginInstallPath!, "user"));
       if (info) info.items.push(makeItem({ kind: "mcp", ...r }));
       continue;
     }
     if (r.location === "scoped-plugin") {
-      const info = installInfo.get(r.pluginInstallPath!);
+      const info = installInfo.get(installKey(r.pluginInstallPath!, "project", r.projectPath));
       if (info) info.items.push(makeItem({ kind: "mcp", ...r }));
       continue;
     }
@@ -1309,7 +1343,7 @@ export async function collect(): Promise<CollectResult> {
   const fromHistory = new Set<string>(folderToCwdCache.values());
   const candidates = new Set<string>(fromHistory);
   for (const inst of installs) {
-    if (!installInfo.has(inst.installPath)) continue;
+    if (!installInfo.has(installKey(inst.installPath, inst.scope, inst.projectPath))) continue;
     if (inst.scope === "project" && inst.projectPath) candidates.add(inst.projectPath);
   }
   for (const p of projectMcpsByPath.keys()) candidates.add(p);
